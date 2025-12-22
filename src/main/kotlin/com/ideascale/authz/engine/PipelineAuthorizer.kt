@@ -8,7 +8,7 @@ import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.core.ResourceRef
 import com.ideascale.authz.core.Subject
 
-class PipelineAuthorizer(
+class PipelineAuthorizer internal constructor(
     private val evaluators: List<Evaluator>
 ) : Authorizer {
     override fun authorize(

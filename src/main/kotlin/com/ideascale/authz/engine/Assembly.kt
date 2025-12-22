@@ -8,8 +8,6 @@ import com.ideascale.authz.engine.evaluators.RelationshipEvaluator
 import com.ideascale.authz.engine.evaluators.ResourceContextEvaluator
 import com.ideascale.authz.engine.policies.AttributeConstraintPolicy
 import com.ideascale.authz.engine.policies.AuthorityPolicy
-import com.ideascale.authz.engine.policies.DefaultAttributeConstraintPolicy
-import com.ideascale.authz.engine.policies.DefaultAuthorityPolicy
 import com.ideascale.authz.engine.providers.AttributeProvider
 import com.ideascale.authz.engine.providers.AuthorityProvider
 import com.ideascale.authz.engine.providers.GlobalDenyProvider
@@ -22,18 +20,20 @@ data class PipelineDependencies(
     val relationshipProvider: RelationshipProvider,
     val attributeProvider: AttributeProvider,
     val authorityProvider: AuthorityProvider,
-    val attributeConstraintPolicy: AttributeConstraintPolicy = DefaultAttributeConstraintPolicy(),
-    val authorityPolicy: AuthorityPolicy = DefaultAuthorityPolicy()
+    val attributeConstraintPolicy: AttributeConstraintPolicy,
+    val authorityPolicy: AuthorityPolicy
 )
 
-fun buildDefaultPipelineAuthorizer(deps: PipelineDependencies): Authorizer {
-    val evaluators = listOf(
-        GlobalDenyEvaluator(deps.globalDenyProvider),
-        ResourceContextEvaluator(deps.resourceContextResolver),
-        RelationshipEvaluator(deps.relationshipProvider),
-        AttributeConstraintEvaluator(deps.attributeProvider, deps.attributeConstraintPolicy),
-        AuthorityEvaluator(deps.authorityProvider, deps.authorityPolicy)
-    )
+object PipelineAuthorizerFactory {
+    fun build(deps: PipelineDependencies): Authorizer {
+        val evaluators = listOf(
+            GlobalDenyEvaluator(deps.globalDenyProvider),
+            ResourceContextEvaluator(deps.resourceContextResolver),
+            RelationshipEvaluator(deps.relationshipProvider),
+            AttributeConstraintEvaluator(deps.attributeProvider, deps.attributeConstraintPolicy),
+            AuthorityEvaluator(deps.authorityProvider, deps.authorityPolicy)
+        )
 
-    return PipelineAuthorizer(evaluators)
+        return PipelineAuthorizer(evaluators)
+    }
 }
