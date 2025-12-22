@@ -14,8 +14,8 @@ Framework-neutral Kotlin/JVM library that defines authorization contract types f
 
 ## Example usage
 ```kotlin
-import com.ideascale.authz.*
-import com.ideascale.authz.actions.IdeaActions
+import com.ideascale.authz.core.*
+import com.ideascale.authz.core.actions.IdeaActions
 
 val subject = Subject(workspaceId = "w1", memberId = "m42")
 val resource = ResourceRef(ResourceType.IDEA, id = "idea-123")

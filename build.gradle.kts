@@ -1,29 +1,12 @@
 plugins {
-    kotlin("jvm") version "2.0.21"
-    `java-library`
+    kotlin("jvm") version "2.0.21" apply false
 }
 
-group = "com.ideascale"
-version = "0.1.0"
+subprojects {
+    group = "com.ideascale"
+    version = "0.1.0"
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+    repositories {
+        mavenCentral()
     }
-}
-
-kotlin {
-    jvmToolchain(17)
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation(kotlin("test"))
-}
-
-tasks.test {
-    useJUnitPlatform()
 }

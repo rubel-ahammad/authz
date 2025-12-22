@@ -1,1 +1,4 @@
-rootProject.name = "authz-core"
+rootProject.name = "authz"
+
+include("core")
+include("engine")
