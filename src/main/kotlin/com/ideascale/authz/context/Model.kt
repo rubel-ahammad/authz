@@ -1,4 +1,4 @@
-package com.ideascale.authz.engine
+package com.ideascale.authz.context
 
 sealed interface ResourceContext {
     val workspaceId: String

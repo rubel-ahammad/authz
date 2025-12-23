@@ -5,14 +5,14 @@ import com.ideascale.authz.engine.evaluators.AttributeEvaluationStep
 import com.ideascale.authz.engine.evaluators.RoleEvaluationStep
 import com.ideascale.authz.engine.evaluators.RelationshipEvaluationStep
 import com.ideascale.authz.engine.evaluators.ResourceEvaluationStep
-import com.ideascale.authz.engine.policies.DefaultPolicyBundle
-import com.ideascale.authz.engine.policies.StageRuleRegistries
-import com.ideascale.authz.engine.providers.AttributeContextProvider
-import com.ideascale.authz.engine.providers.RoleContextProvider
-import com.ideascale.authz.engine.providers.RelationshipContextProvider
-import com.ideascale.authz.engine.providers.ResourceContextProvider
-import com.ideascale.authz.engine.rules.ActionClassifier
-import com.ideascale.authz.engine.rules.DefaultActionClassifier
+import com.ideascale.authz.context.providers.AttributeContextProvider
+import com.ideascale.authz.context.providers.RelationshipContextProvider
+import com.ideascale.authz.context.providers.ResourceContextProvider
+import com.ideascale.authz.context.providers.RoleContextProvider
+import com.ideascale.authz.policy.DefaultPolicyBundle
+import com.ideascale.authz.policy.StageRuleRegistries
+import com.ideascale.authz.policy.rules.ActionClassifier
+import com.ideascale.authz.policy.rules.DefaultActionClassifier
 
 data class PipelineDependencies(
     val resourceContextProvider: ResourceContextProvider,

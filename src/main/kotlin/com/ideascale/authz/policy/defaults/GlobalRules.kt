@@ -1,10 +1,10 @@
-package com.ideascale.authz.engine.policies.rules
+package com.ideascale.authz.policy.defaults
 
 import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.engine.EvaluationContext
-import com.ideascale.authz.engine.rules.ActionGroup
-import com.ideascale.authz.engine.rules.DenyRule
-import com.ideascale.authz.engine.rules.Target
+import com.ideascale.authz.core.ActionGroup
+import com.ideascale.authz.policy.rules.DenyRule
+import com.ideascale.authz.policy.rules.Target
 
 object GlobalRules {
     fun attributeDenyRules(): List<DenyRule> = listOf(

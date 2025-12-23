@@ -1,4 +1,4 @@
-package com.ideascale.authz.engine.rules
+package com.ideascale.authz.policy.rules
 
 import com.ideascale.authz.core.Action
 import com.ideascale.authz.core.ActionGroup

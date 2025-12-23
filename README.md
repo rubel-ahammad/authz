@@ -304,28 +304,29 @@ src/main/kotlin/com/ideascale/authz/
 │       ├── CampaignActions.kt
 │       ├── IdeaActions.kt
 │       └── MemberActions.kt
+├── context/                       # Evaluation context models
+│   ├── Model.kt                   # Resource/Relationship/Attribute/Role context types
+│   └── providers/
+│       ├── AttributeContextProvider.kt
+│       ├── RoleContextProvider.kt
+│       ├── RelationshipContextProvider.kt
+│       └── ResourceContextProvider.kt
 └── engine/                        # Pipeline implementation
     ├── Assembly.kt                # Factory and DI
     ├── AuthzRequest.kt
     ├── EvaluationContext.kt
     ├── EvaluationStep.kt          # EvaluationStep interface, StepResult
-    ├── Model.kt                   # Facts types (ResourceContext, RelationshipContext, AttributeContext, RoleContext)
     ├── PipelineAuthorizer.kt
     ├── evaluators/
     │   ├── AttributeEvaluationStep.kt
     │   ├── RoleEvaluationStep.kt
     │   ├── RelationshipEvaluationStep.kt
     │   └── ResourceEvaluationStep.kt
-    ├── policies/
-    │   ├── PolicyBundle.kt
-    │   └── rules/
-    │       ├── GlobalRules.kt
-    │       └── IdeaRules.kt
-    ├── providers/
-    │   ├── AttributeContextProvider.kt
-    │   ├── RoleContextProvider.kt
-    │   ├── RelationshipContextProvider.kt
-    │   └── ResourceContextProvider.kt
+└── policy/                        # Rule DSL and default policies
+    ├── PolicyBundle.kt
+    ├── defaults/
+    │   ├── GlobalRules.kt
+    │   └── IdeaRules.kt
     └── rules/
         └── Rules.kt               # Rule types and registry
 ```

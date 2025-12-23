@@ -1,15 +1,15 @@
-package com.ideascale.authz.engine.policies.rules
+package com.ideascale.authz.policy.defaults
 
 import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.core.ResourceType
-import com.ideascale.authz.engine.CampaignState
+import com.ideascale.authz.context.CampaignState
 import com.ideascale.authz.engine.EvaluationContext
-import com.ideascale.authz.engine.IdeaState
-import com.ideascale.authz.engine.RoleIds
-import com.ideascale.authz.engine.rules.ActionGroup
-import com.ideascale.authz.engine.rules.AllowRule
-import com.ideascale.authz.engine.rules.DenyRule
-import com.ideascale.authz.engine.rules.Target
+import com.ideascale.authz.context.IdeaState
+import com.ideascale.authz.context.RoleIds
+import com.ideascale.authz.core.ActionGroup
+import com.ideascale.authz.policy.rules.AllowRule
+import com.ideascale.authz.policy.rules.DenyRule
+import com.ideascale.authz.policy.rules.Target
 
 object IdeaRules {
     fun resourceContextDenyRules(): List<DenyRule> = emptyList()

@@ -4,10 +4,10 @@ import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.engine.EvaluationContext
 import com.ideascale.authz.engine.EvaluationStep
 import com.ideascale.authz.engine.StepResult
-import com.ideascale.authz.engine.providers.ResourceContextProvider
-import com.ideascale.authz.engine.rules.ActionClassifier
-import com.ideascale.authz.engine.rules.RuleRegistry
-import com.ideascale.authz.engine.rules.Target
+import com.ideascale.authz.context.providers.ResourceContextProvider
+import com.ideascale.authz.policy.rules.ActionClassifier
+import com.ideascale.authz.policy.rules.RuleRegistry
+import com.ideascale.authz.policy.rules.Target
 
 class ResourceEvaluationStep(
     private val provider: ResourceContextProvider,

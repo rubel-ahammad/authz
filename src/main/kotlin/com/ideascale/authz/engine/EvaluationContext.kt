@@ -1,5 +1,9 @@
 package com.ideascale.authz.engine
 
+import com.ideascale.authz.context.AttributeContext
+import com.ideascale.authz.context.RelationshipContext
+import com.ideascale.authz.context.ResourceContext
+import com.ideascale.authz.context.RoleContext
 import com.ideascale.authz.core.Decision
 import com.ideascale.authz.core.Obligation
 import com.ideascale.authz.core.ReasonCode

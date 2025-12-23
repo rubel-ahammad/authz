@@ -1,8 +1,8 @@
-package com.ideascale.authz.engine.providers
+package com.ideascale.authz.context.providers
 
 import com.ideascale.authz.core.ResourceRef
-import com.ideascale.authz.engine.RelationshipContext
-import com.ideascale.authz.engine.ResourceContext
+import com.ideascale.authz.context.RelationshipContext
+import com.ideascale.authz.context.ResourceContext
 
 interface RelationshipContextProvider {
     fun load(
