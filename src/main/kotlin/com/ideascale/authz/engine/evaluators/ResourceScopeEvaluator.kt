@@ -3,13 +3,13 @@ package com.ideascale.authz.engine.evaluators
 import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.engine.EvalResult
 import com.ideascale.authz.engine.EvaluationContext
-import com.ideascale.authz.engine.providers.ResourceContextResolver
+import com.ideascale.authz.engine.providers.ResourceContextProvider
 import com.ideascale.authz.engine.rules.ActionClassifier
 import com.ideascale.authz.engine.rules.RuleRegistry
 import com.ideascale.authz.engine.rules.Target
 
 class ResourceScopeEvaluator(
-    private val resolver: ResourceContextResolver,
+    private val provider: ResourceContextProvider,
     private val registry: RuleRegistry,
     private val classifier: ActionClassifier
 ) : com.ideascale.authz.engine.Evaluator {
@@ -18,7 +18,7 @@ class ResourceScopeEvaluator(
         val subject = request.subject
         val resource = request.resource
 
-        val rc = resolver.resolve(resource)
+        val rc = provider.load(resource)
         ctx.resourceContext = rc
 
         if (rc.workspaceId != subject.workspaceId) {

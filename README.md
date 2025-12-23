@@ -127,8 +127,8 @@ Request ──► ResourceScopeEvaluator ──► RelationshipEvaluator ──�
 Implement these to integrate with your data layer:
 
 ```kotlin
-interface ResourceContextResolver {
-    fun resolve(resource: ResourceRef): ResourceContext
+interface ResourceContextProvider {
+    fun load(resource: ResourceRef): ResourceContext
 }
 
 interface RelationshipProvider {
@@ -187,14 +187,14 @@ ActionSemantics.groupOf(Action("typo.action"))      // UNKNOWN (denied)
 
 ```kotlin
 // 1. Implement providers
-val resolver: ResourceContextResolver = MyResourceContextResolver()
+val resourceContextProvider: ResourceContextProvider = MyResourceContextProvider()
 val relationshipProvider: RelationshipProvider = MyRelationshipProvider()
 val attributeProvider: AttributeProvider = MyAttributeProvider()
 val authorityProvider: AuthorityProvider = MyAuthorityProvider()
 
 // 2. Build authorizer
 val deps = PipelineDependencies(
-    resourceContextResolver = resolver,
+    resourceContextProvider = resourceContextProvider,
     relationshipProvider = relationshipProvider,
     attributeProvider = attributeProvider,
     authorityProvider = authorityProvider
@@ -290,7 +290,7 @@ src/main/kotlin/com/ideascale/authz/
     │   ├── AttributeProvider.kt
     │   ├── AuthorityProvider.kt
     │   ├── RelationshipProvider.kt
-    │   └── ResourceContextResolver.kt
+    │   └── ResourceContextProvider.kt
     └── rules/
         └── Rules.kt               # Rule types and registry
 ```
