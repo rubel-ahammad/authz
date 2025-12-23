@@ -1,13 +1,13 @@
-package com.ideascale.authz.engine.evaluators
+package com.ideascale.authz.engine.evaluator
 
 import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.engine.EvaluationContext
 import com.ideascale.authz.engine.EvaluationStep
 import com.ideascale.authz.engine.StepResult
-import com.ideascale.authz.context.providers.RoleContextProvider
-import com.ideascale.authz.policy.rules.ActionClassifier
-import com.ideascale.authz.policy.rules.RuleRegistry
-import com.ideascale.authz.policy.rules.Target
+import com.ideascale.authz.context.provider.RoleContextProvider
+import com.ideascale.authz.policy.rule.ActionClassifier
+import com.ideascale.authz.policy.rule.RuleRegistry
+import com.ideascale.authz.policy.rule.Target
 
 class RoleEvaluationStep(
     private val provider: RoleContextProvider,

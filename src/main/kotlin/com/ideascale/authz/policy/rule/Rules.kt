@@ -1,11 +1,11 @@
-package com.ideascale.authz.policy.rules
+package com.ideascale.authz.policy.rule
 
 import com.ideascale.authz.core.Action
 import com.ideascale.authz.core.ActionGroup
 import com.ideascale.authz.core.Decision
 import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.core.ResourceType
-import com.ideascale.authz.core.actions.ActionSemantics
+import com.ideascale.authz.core.action.ActionSemantics
 import com.ideascale.authz.engine.EvaluationContext
 
 fun interface ActionClassifier {

@@ -185,25 +185,27 @@ Rules are indexed by `Target` (ResourceType + ActionGroup):
 
 ```kotlin
 // Deny rule example
-DenyRule(
-    id = "idea.state.deny_write",
-    target = Target(ResourceType.IDEA, ActionGroup.WRITE)
-) { ctx ->
-    when (ctx.attributeContext?.idea?.state) {
-        IdeaState.LOCKED -> ReasonCode.DENY_IDEA_LOCKED
-        IdeaState.ARCHIVED -> ReasonCode.DENY_IDEA_ARCHIVED
-        else -> null
+deny {
+    id("idea.state.deny_write")
+    target(ResourceType.IDEA, ActionGroup.WRITE)
+    condition { ctx ->
+        when (ctx.attributeContext?.idea?.state) {
+            IdeaState.LOCKED -> ReasonCode.DENY_IDEA_LOCKED
+            IdeaState.ARCHIVED -> ReasonCode.DENY_IDEA_ARCHIVED
+            else -> null
+        }
     }
 }
 
 // Allow rule example
-AllowRule(
-    id = "idea.write.allow_owner",
-    target = Target(ResourceType.IDEA, ActionGroup.WRITE)
-) { ctx ->
-    if (ctx.relationshipContext?.isIdeaOwner == true) {
-        ctx.allow(ReasonCode.ALLOW_OWNER)
-    } else null
+allow {
+    id("idea.write.allow_owner")
+    target(ResourceType.IDEA, ActionGroup.WRITE)
+    condition { ctx ->
+        if (ctx.relationshipContext?.isIdeaOwner == true) {
+            ctx.allow(ReasonCode.ALLOW_OWNER)
+        } else null
+    }
 }
 ```
 
@@ -299,35 +301,37 @@ src/main/kotlin/com/ideascale/authz/
 │   ├── ResourceRef.kt
 │   ├── ResourceType.kt
 │   ├── Subject.kt
-│   └── actions/
+│   └── action/
 │       ├── ActionSemantics.kt     # Action → ActionGroup registry
 │       ├── CampaignActions.kt
 │       ├── IdeaActions.kt
 │       └── MemberActions.kt
 ├── context/                       # Evaluation context models
 │   ├── Model.kt                   # Resource/Relationship/Attribute/Role context types
-│   └── providers/
+│   └── provider/
 │       ├── AttributeContextProvider.kt
 │       ├── RoleContextProvider.kt
 │       ├── RelationshipContextProvider.kt
 │       └── ResourceContextProvider.kt
-└── engine/                        # Pipeline implementation
+├── engine/                        # Pipeline implementation
     ├── Assembly.kt                # Factory and DI
     ├── AuthzRequest.kt
     ├── EvaluationContext.kt
     ├── EvaluationStep.kt          # EvaluationStep interface, StepResult
     ├── PipelineAuthorizer.kt
-    ├── evaluators/
+    ├── evaluator/
     │   ├── AttributeEvaluationStep.kt
     │   ├── RoleEvaluationStep.kt
     │   ├── RelationshipEvaluationStep.kt
     │   └── ResourceEvaluationStep.kt
 └── policy/                        # Rule DSL and default policies
     ├── PolicyBundle.kt
-    ├── defaults/
+    ├── default/
     │   ├── GlobalRules.kt
     │   └── IdeaRules.kt
-    └── rules/
+    ├── dsl/
+    │   └── RuleDsl.kt
+    └── rule/
         └── Rules.kt               # Rule types and registry
 ```
 

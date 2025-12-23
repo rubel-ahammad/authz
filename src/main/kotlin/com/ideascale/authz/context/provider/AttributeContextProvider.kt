@@ -1,4 +1,4 @@
-package com.ideascale.authz.context.providers
+package com.ideascale.authz.context.provider
 
 import com.ideascale.authz.core.AuthzContext
 import com.ideascale.authz.core.ResourceRef

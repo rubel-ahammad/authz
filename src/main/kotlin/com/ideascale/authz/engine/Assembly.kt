@@ -1,18 +1,18 @@
 package com.ideascale.authz.engine
 
 import com.ideascale.authz.core.Authorizer
-import com.ideascale.authz.engine.evaluators.AttributeEvaluationStep
-import com.ideascale.authz.engine.evaluators.RoleEvaluationStep
-import com.ideascale.authz.engine.evaluators.RelationshipEvaluationStep
-import com.ideascale.authz.engine.evaluators.ResourceEvaluationStep
-import com.ideascale.authz.context.providers.AttributeContextProvider
-import com.ideascale.authz.context.providers.RelationshipContextProvider
-import com.ideascale.authz.context.providers.ResourceContextProvider
-import com.ideascale.authz.context.providers.RoleContextProvider
+import com.ideascale.authz.engine.evaluator.AttributeEvaluationStep
+import com.ideascale.authz.engine.evaluator.RoleEvaluationStep
+import com.ideascale.authz.engine.evaluator.RelationshipEvaluationStep
+import com.ideascale.authz.engine.evaluator.ResourceEvaluationStep
+import com.ideascale.authz.context.provider.AttributeContextProvider
+import com.ideascale.authz.context.provider.RelationshipContextProvider
+import com.ideascale.authz.context.provider.ResourceContextProvider
+import com.ideascale.authz.context.provider.RoleContextProvider
 import com.ideascale.authz.policy.DefaultPolicyBundle
 import com.ideascale.authz.policy.StageRuleRegistries
-import com.ideascale.authz.policy.rules.ActionClassifier
-import com.ideascale.authz.policy.rules.DefaultActionClassifier
+import com.ideascale.authz.policy.rule.ActionClassifier
+import com.ideascale.authz.policy.rule.DefaultActionClassifier
 
 data class PipelineDependencies(
     val resourceContextProvider: ResourceContextProvider,

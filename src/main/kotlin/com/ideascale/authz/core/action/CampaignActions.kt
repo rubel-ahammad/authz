@@ -1,4 +1,4 @@
-package com.ideascale.authz.core.actions
+package com.ideascale.authz.core.action
 
 import com.ideascale.authz.core.Action
 

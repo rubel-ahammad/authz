@@ -1,10 +1,10 @@
 package com.ideascale.authz.policy
 
-import com.ideascale.authz.policy.defaults.GlobalRules
-import com.ideascale.authz.policy.defaults.IdeaRules
-import com.ideascale.authz.policy.rules.AllowRule
-import com.ideascale.authz.policy.rules.DenyRule
-import com.ideascale.authz.policy.rules.RuleRegistry
+import com.ideascale.authz.policy.catalog.GlobalRules
+import com.ideascale.authz.policy.catalog.IdeaRules
+import com.ideascale.authz.policy.rule.AllowRule
+import com.ideascale.authz.policy.rule.DenyRule
+import com.ideascale.authz.policy.rule.RuleRegistry
 
 data class StageRuleRegistries(
     val resourceContext: RuleRegistry,
