@@ -46,6 +46,7 @@ object RoleIds {
 }
 
 data class RelationshipFacts(
+    val isWorkspaceMember: Boolean = false,
     val isIdeaOwner: Boolean = false,
     val viaGroupIds: Set<String> = emptySet()
 )

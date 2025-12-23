@@ -1,29 +1,19 @@
 package com.ideascale.authz.engine.rules
 
 import com.ideascale.authz.core.Action
+import com.ideascale.authz.core.ActionGroup
 import com.ideascale.authz.core.Decision
 import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.core.ResourceType
+import com.ideascale.authz.core.actions.ActionSemantics
 import com.ideascale.authz.engine.EvaluationContext
-
-enum class ActionGroup { READ, WRITE, MODERATE, ADMIN }
 
 fun interface ActionClassifier {
     fun groupOf(action: Action): ActionGroup
 }
 
 object DefaultActionClassifier : ActionClassifier {
-    override fun groupOf(action: Action): ActionGroup {
-        val id = action.id
-        return when {
-            id.contains(".moderate.") -> ActionGroup.MODERATE
-            id.endsWith(".create") || id.endsWith(".edit") || id.endsWith(".update") || id.endsWith(".delete") ->
-                ActionGroup.WRITE
-            id.contains(".admin.") || id.contains(".settings.") || id.contains(".manage.") ->
-                ActionGroup.ADMIN
-            else -> ActionGroup.READ
-        }
-    }
+    override fun groupOf(action: Action): ActionGroup = ActionSemantics.groupOf(action)
 }
 
 data class Target(val resourceType: ResourceType?, val actionGroup: ActionGroup) {

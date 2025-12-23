@@ -72,14 +72,14 @@ object IdeaRules {
             id = "idea.moderate.allow_campaign_moderator",
             target = Target(ResourceType.IDEA, ActionGroup.MODERATE)
         ) { ec: EvaluationContext ->
-            val rf = ec.relationshipFacts ?: return@AllowRule null
-            if (!rf.isCampaignModerator) return@AllowRule null
+            val authorities = ec.authorities ?: return@AllowRule null
+            if (RoleIds.CAMPAIGN_MODERATOR !in authorities.campaignRoles) return@AllowRule null
 
             ec.allow(
                 reason = ReasonCode.ALLOW_ROLE,
                 details = mapOf(
                     "matchedRuleId" to "idea.moderate.allow_campaign_moderator",
-                    "matchedRole" to "CAMPAIGN_MODERATOR"
+                    "matchedRole" to RoleIds.CAMPAIGN_MODERATOR.value
                 )
             )
         }

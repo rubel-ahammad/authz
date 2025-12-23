@@ -1,43 +1,53 @@
 package com.ideascale.authz.core.actions
 
 import com.ideascale.authz.core.Action
+import com.ideascale.authz.core.ActionGroup
 
 object ActionSemantics {
-    private val moderationActionIds: Set<String> = setOf(
-        IdeaActions.Moderate.HIDE.id,
-        IdeaActions.Moderate.UNHIDE.id,
-        IdeaActions.Moderate.LOCK.id,
-        IdeaActions.Moderate.UNLOCK.id
-    )
+    // Explicit action → group registry (single source of truth)
+    private val actionGroups: Map<String, ActionGroup> = buildMap {
+        // READ actions
+        put(IdeaActions.READ.id, ActionGroup.READ)
+        put(IdeaActions.LIST.id, ActionGroup.READ)
+        put(CampaignActions.READ.id, ActionGroup.READ)
+        put(CampaignActions.LIST.id, ActionGroup.READ)
+        put(MemberActions.READ.id, ActionGroup.READ)
+        put(MemberActions.LIST.id, ActionGroup.READ)
 
-    private val writeActionIds: Set<String> = setOf(
-        IdeaActions.CREATE.id,
-        IdeaActions.EDIT.id,
-        IdeaActions.DELETE.id,
-        CampaignActions.CREATE.id,
-        CampaignActions.UPDATE.id,
-        CampaignActions.DELETE.id,
-        CampaignActions.LAUNCH.id,
-        CampaignActions.CLOSE.id,
-        CampaignActions.ARCHIVE.id,
-        MemberActions.UPDATE.id,
-        MemberActions.BAN.id,
-        MemberActions.UNBAN.id,
-        MemberActions.INVITE.id
-    ) + moderationActionIds
+        // WRITE actions
+        put(IdeaActions.CREATE.id, ActionGroup.WRITE)
+        put(IdeaActions.EDIT.id, ActionGroup.WRITE)
+        put(IdeaActions.DELETE.id, ActionGroup.WRITE)
+        put(CampaignActions.CREATE.id, ActionGroup.WRITE)
+        put(CampaignActions.UPDATE.id, ActionGroup.WRITE)
+        put(CampaignActions.DELETE.id, ActionGroup.WRITE)
+        put(MemberActions.UPDATE.id, ActionGroup.WRITE)
 
-    private val adminActionIds: Set<String> = setOf(
-        MemberActions.BAN.id,
-        MemberActions.UNBAN.id,
-        MemberActions.INVITE.id,
-        CampaignActions.LAUNCH.id,
-        CampaignActions.CLOSE.id,
-        CampaignActions.ARCHIVE.id
-    )
+        // MODERATE actions
+        put(IdeaActions.Moderate.HIDE.id, ActionGroup.MODERATE)
+        put(IdeaActions.Moderate.UNHIDE.id, ActionGroup.MODERATE)
+        put(IdeaActions.Moderate.LOCK.id, ActionGroup.MODERATE)
+        put(IdeaActions.Moderate.UNLOCK.id, ActionGroup.MODERATE)
 
-    fun isWrite(action: Action): Boolean = action.id in writeActionIds
+        // ADMIN actions
+        put(MemberActions.BAN.id, ActionGroup.ADMIN)
+        put(MemberActions.UNBAN.id, ActionGroup.ADMIN)
+        put(MemberActions.INVITE.id, ActionGroup.ADMIN)
+        put(CampaignActions.LAUNCH.id, ActionGroup.ADMIN)
+        put(CampaignActions.CLOSE.id, ActionGroup.ADMIN)
+        put(CampaignActions.ARCHIVE.id, ActionGroup.ADMIN)
+    }
 
-    fun isModeration(action: Action): Boolean = action.id in moderationActionIds
+    fun groupOf(action: Action): ActionGroup =
+        actionGroups[action.id] ?: ActionGroup.UNKNOWN
 
-    fun isAdmin(action: Action): Boolean = action.id in adminActionIds
+    // Backward-compatible helper methods
+    fun isWrite(action: Action): Boolean =
+        groupOf(action).let { it == ActionGroup.WRITE || it == ActionGroup.MODERATE }
+
+    fun isModeration(action: Action): Boolean =
+        groupOf(action) == ActionGroup.MODERATE
+
+    fun isAdmin(action: Action): Boolean =
+        groupOf(action) == ActionGroup.ADMIN
 }
