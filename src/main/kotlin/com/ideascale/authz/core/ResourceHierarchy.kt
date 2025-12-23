@@ -1,7 +1,7 @@
 package com.ideascale.authz.core
 
 /**
- * Declarative resource hierarchy schema.
+ * Declarative resource hierarchy.
  *
  * Documents the parent-child relationships between resource types:
  *
@@ -17,7 +17,7 @@ package com.ideascale.authz.core
  *   ├── TRANSLATION
  *   └── MODERATION_CASE
  */
-object EntitySchema {
+object ResourceHierarchy {
 
     private val parentTypes: Map<ResourceType, ResourceType?> = mapOf(
         // Root

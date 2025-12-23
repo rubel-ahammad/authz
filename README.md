@@ -1,4 +1,4 @@
-# authz-core
+# authz
 
 Framework-neutral Kotlin/JVM authorization library implementing Policy-Based Access Control (PBAC) with Relationship-Based Access Control (ReBAC) patterns.
 
@@ -8,7 +8,7 @@ Framework-neutral Kotlin/JVM authorization library implementing Policy-Based Acc
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Core Module                              │
 │  Subject, Action, ResourceRef, Decision, ReasonCode, Obligation │
-│  ActionGroup, EntitySchema, Authorizer interface                 │
+│  ActionGroup, ResourceHierarchy, Authorizer interface            │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
@@ -63,7 +63,7 @@ data class Decision(
 
 ## Resource Hierarchy
 
-Declared in `EntitySchema`:
+Declared in `ResourceHierarchy`:
 
 ```
 WORKSPACE (root)
@@ -79,10 +79,10 @@ Cross-cutting: TRANSLATION, MODERATION_CASE
 
 Query utilities:
 ```kotlin
-EntitySchema.parentOf(ResourceType.IDEA)      // CAMPAIGN
-EntitySchema.ancestorsOf(ResourceType.IDEA)   // [CAMPAIGN, COMMUNITY, WORKSPACE]
-EntitySchema.isDescendantOf(IDEA, WORKSPACE)  // true
-EntitySchema.childrenOf(WORKSPACE)            // [COMMUNITY, MEMBER, GROUP, SUBSCRIPTION]
+ResourceHierarchy.parentOf(ResourceType.IDEA)      // CAMPAIGN
+ResourceHierarchy.ancestorsOf(ResourceType.IDEA)   // [CAMPAIGN, COMMUNITY, WORKSPACE]
+ResourceHierarchy.isDescendantOf(IDEA, WORKSPACE)  // true
+ResourceHierarchy.childrenOf(WORKSPACE)            // [COMMUNITY, MEMBER, GROUP, SUBSCRIPTION]
 ```
 
 ## Authorization Pipeline
@@ -257,7 +257,7 @@ src/main/kotlin/com/ideascale/authz/
 │   ├── Decision.kt
 │   ├── DecisionLogFields.kt
 │   ├── Effect.kt
-│   ├── EntitySchema.kt            # Declarative resource hierarchy
+│   ├── ResourceHierarchy.kt       # Declarative resource hierarchy
 │   ├── Obligation.kt
 │   ├── PrincipalType.kt
 │   ├── ReasonCode.kt
