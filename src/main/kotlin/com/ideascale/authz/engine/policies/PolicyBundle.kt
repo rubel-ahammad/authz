@@ -1,5 +1,6 @@
 package com.ideascale.authz.engine.policies
 
+import com.ideascale.authz.engine.policies.rules.GlobalRules
 import com.ideascale.authz.engine.policies.rules.IdeaRules
 import com.ideascale.authz.engine.rules.AllowRule
 import com.ideascale.authz.engine.rules.DenyRule
@@ -22,6 +23,7 @@ object DefaultPolicyBundle {
     }
 
     fun attributeRules(): List<DenyRule> = buildList {
+        addAll(GlobalRules.attributeDenyRules())
         addAll(IdeaRules.attributeDenyRules())
     }
 

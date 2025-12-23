@@ -26,7 +26,11 @@ object DefaultActionClassifier : ActionClassifier {
     }
 }
 
-data class Target(val resourceType: ResourceType, val actionGroup: ActionGroup)
+data class Target(val resourceType: ResourceType?, val actionGroup: ActionGroup) {
+    companion object {
+        fun global(actionGroup: ActionGroup) = Target(null, actionGroup)
+    }
+}
 
 class DenyRule(
     val id: String,
@@ -47,6 +51,9 @@ class RuleRegistry(
     private val deniesByTarget: Map<Target, List<DenyRule>> = denyRules.groupBy { it.target }
     private val allowsByTarget: Map<Target, List<AllowRule>> = allowRules.groupBy { it.target }
 
-    fun deniesFor(target: Target): List<DenyRule> = deniesByTarget[target].orEmpty()
-    fun allowsFor(target: Target): List<AllowRule> = allowsByTarget[target].orEmpty()
+    fun deniesFor(target: Target): List<DenyRule> =
+        deniesByTarget[Target.global(target.actionGroup)].orEmpty() + deniesByTarget[target].orEmpty()
+
+    fun allowsFor(target: Target): List<AllowRule> =
+        allowsByTarget[Target.global(target.actionGroup)].orEmpty() + allowsByTarget[target].orEmpty()
 }

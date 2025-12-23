@@ -17,7 +17,6 @@ object IdeaRules {
     fun relationshipDenyRules(): List<DenyRule> = emptyList()
 
     fun attributeDenyRules(): List<DenyRule> = listOf(
-        denyWritesWhenWorkspaceReadOnly(),
         denyWritesWhenCampaignReadOnlyOrExpired(),
         denyWritesWhenIdeaLockedOrArchived()
     )
@@ -27,15 +26,6 @@ object IdeaRules {
         allowIdeaModerationForCampaignModerator(),
         allowAllForWorkspaceAdmin()
     )
-
-    private fun denyWritesWhenWorkspaceReadOnly(): DenyRule =
-        DenyRule(
-            id = "idea.workspace.readonly.deny_write",
-            target = Target(ResourceType.IDEA, ActionGroup.WRITE)
-        ) { ec: EvaluationContext ->
-            val facts = ec.attributeFacts ?: return@DenyRule null
-            if (facts.workspace.flags.isReadOnlyMode) ReasonCode.DENY_WORKSPACE_READONLY else null
-        }
 
     private fun denyWritesWhenCampaignReadOnlyOrExpired(): DenyRule =
         DenyRule(
