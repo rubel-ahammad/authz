@@ -1,32 +1,51 @@
 package com.ideascale.authz.engine.evaluators
 
+import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.engine.EvalResult
 import com.ideascale.authz.engine.EvaluationContext
-import com.ideascale.authz.engine.policies.AttributeConstraintPolicy
 import com.ideascale.authz.engine.providers.AttributeProvider
+import com.ideascale.authz.engine.rules.ActionClassifier
+import com.ideascale.authz.engine.rules.RuleRegistry
+import com.ideascale.authz.engine.rules.Target
 
 class AttributeConstraintEvaluator(
     private val provider: AttributeProvider,
-    private val policy: AttributeConstraintPolicy
+    private val registry: RuleRegistry,
+    private val classifier: ActionClassifier
 ) : com.ideascale.authz.engine.Evaluator {
     override fun evaluate(ctx: EvaluationContext): EvalResult {
-        val subject = ctx.request.subject
-        val resource = ctx.request.resource
+        val request = ctx.request
         val rc = ctx.resourceContext
             ?: return EvalResult.Stop(
-                ctx.deny(com.ideascale.authz.core.ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingResourceContext"))
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingResourceContext"))
             )
-        val rf = ctx.relationshipFacts
-            ?: return EvalResult.Stop(
-                ctx.deny(com.ideascale.authz.core.ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingRelationshipFacts"))
+        if (ctx.relationshipFacts == null) {
+            return EvalResult.Stop(
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingRelationshipFacts"))
             )
+        }
 
-        val af = provider.load(subject.workspaceId, subject.memberId, resource, rc)
-        ctx.attributeFacts = af
+        val subject = request.subject
 
-        val denyReason = policy.denyReasonIfForbidden(ctx.request.action, resource, rc, rf, af)
-        if (denyReason != null) {
-            return EvalResult.Stop(ctx.deny(denyReason))
+        val attributeFacts = ctx.memoize("attributeFacts") {
+            provider.load(subject.workspaceId, subject.memberId, request.resource, rc, request.context)
+        }
+        ctx.attributeFacts = attributeFacts
+
+        val target = Target(request.resource.type, classifier.groupOf(request.action))
+        for (rule in registry.deniesFor(target)) {
+            val denyReason = rule.evaluate(ctx)
+            if (denyReason != null) {
+                return EvalResult.Stop(
+                    ctx.deny(
+                        denyReason,
+                        details = mapOf(
+                            "deniedByLayer" to "ATTRIBUTE",
+                            "deniedByRuleId" to rule.id
+                        )
+                    )
+                )
+            }
         }
 
         return EvalResult.Continue

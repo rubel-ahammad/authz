@@ -36,8 +36,11 @@ value class ReasonCode(val value: String) {
         val DENY_INSUFFICIENT_PRIVILEGE = ReasonCode("DENY_INSUFFICIENT_PRIVILEGE")
 
         // Resource state
+        val DENY_WORKSPACE_READONLY = ReasonCode("DENY_WORKSPACE_READONLY")
         val DENY_RESOURCE_READONLY = ReasonCode("DENY_RESOURCE_READONLY")
         val DENY_CAMPAIGN_EXPIRED = ReasonCode("DENY_CAMPAIGN_EXPIRED")
+        val DENY_IDEA_LOCKED = ReasonCode("DENY_IDEA_LOCKED")
+        val DENY_IDEA_ARCHIVED = ReasonCode("DENY_IDEA_ARCHIVED")
 
         // Allows (generic)
         val ALLOW_ROLE = ReasonCode("ALLOW_ROLE")
