@@ -1,10 +1,10 @@
 package com.ideascale.authz.engine
 
 import com.ideascale.authz.core.Authorizer
-import com.ideascale.authz.engine.evaluators.AttributeConstraintEvaluator
+import com.ideascale.authz.engine.evaluators.AttributeEvaluator
 import com.ideascale.authz.engine.evaluators.AuthorityEvaluator
 import com.ideascale.authz.engine.evaluators.RelationshipEvaluator
-import com.ideascale.authz.engine.evaluators.ResourceContextEvaluator
+import com.ideascale.authz.engine.evaluators.ResourceScopeEvaluator
 import com.ideascale.authz.engine.policies.DefaultPolicyBundle
 import com.ideascale.authz.engine.policies.StageRuleRegistries
 import com.ideascale.authz.engine.providers.AttributeProvider
@@ -29,9 +29,9 @@ object PipelineAuthorizerFactory {
         val classifier = deps.actionClassifier
 
         val evaluators = listOf(
-            ResourceContextEvaluator(deps.resourceContextResolver, registries.resourceContext, classifier),
+            ResourceScopeEvaluator(deps.resourceContextResolver, registries.resourceContext, classifier),
             RelationshipEvaluator(deps.relationshipProvider, registries.relationship, classifier),
-            AttributeConstraintEvaluator(deps.attributeProvider, registries.attribute, classifier),
+            AttributeEvaluator(deps.attributeProvider, registries.attribute, classifier),
             AuthorityEvaluator(deps.authorityProvider, registries.authority, classifier)
         )
 
