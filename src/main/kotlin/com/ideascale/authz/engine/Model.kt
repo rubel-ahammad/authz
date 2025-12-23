@@ -1,35 +1,35 @@
 package com.ideascale.authz.engine
 
-sealed interface ResourceContext {
+sealed interface ResourceContextFacts {
     val workspaceId: String
 }
 
-data class WorkspaceContext(
+data class WorkspaceContextFacts(
     override val workspaceId: String
-) : ResourceContext
+) : ResourceContextFacts
 
-data class CommunityContext(
+data class CommunityContextFacts(
     override val workspaceId: String,
     val communityId: String
-) : ResourceContext
+) : ResourceContextFacts
 
-data class CampaignContext(
+data class CampaignContextFacts(
     override val workspaceId: String,
     val communityId: String,
     val campaignId: String
-) : ResourceContext
+) : ResourceContextFacts
 
-data class IdeaContext(
+data class IdeaContextFacts(
     override val workspaceId: String,
     val communityId: String,
     val campaignId: String,
     val ideaId: String
-) : ResourceContext
+) : ResourceContextFacts
 
-data class MemberContext(
+data class MemberContextFacts(
     override val workspaceId: String,
     val memberId: String
-) : ResourceContext
+) : ResourceContextFacts
 
 @JvmInline
 value class RoleId(val value: String) {
@@ -122,11 +122,9 @@ sealed interface EmailDomainPolicy {
     data class Blocked(val domain: String) : EmailDomainPolicy
 }
 
-data class Authorities(
+data class RoleFacts(
     val workspaceRoles: Set<RoleId> = emptySet(),
     val communityRoles: Set<RoleId> = emptySet(),
     val campaignRoles: Set<RoleId> = emptySet(),
-    val groupRoles: Set<RoleId> = emptySet(),
-    val permissions: Set<String> = emptySet(),
-    val derived: Set<String> = emptySet()
+    val groupRoles: Set<RoleId> = emptySet()
 )

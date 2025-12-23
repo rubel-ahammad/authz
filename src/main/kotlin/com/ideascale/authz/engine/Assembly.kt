@@ -1,14 +1,14 @@
 package com.ideascale.authz.engine
 
 import com.ideascale.authz.core.Authorizer
-import com.ideascale.authz.engine.evaluators.AttributeEvaluator
-import com.ideascale.authz.engine.evaluators.AuthorityEvaluator
-import com.ideascale.authz.engine.evaluators.RelationshipEvaluator
-import com.ideascale.authz.engine.evaluators.ResourceScopeEvaluator
+import com.ideascale.authz.engine.evaluators.AttributeEvaluationStep
+import com.ideascale.authz.engine.evaluators.RoleEvaluationStep
+import com.ideascale.authz.engine.evaluators.RelationshipEvaluationStep
+import com.ideascale.authz.engine.evaluators.ResourceContextEvaluationStep
 import com.ideascale.authz.engine.policies.DefaultPolicyBundle
 import com.ideascale.authz.engine.policies.StageRuleRegistries
 import com.ideascale.authz.engine.providers.AttributeProvider
-import com.ideascale.authz.engine.providers.AuthorityProvider
+import com.ideascale.authz.engine.providers.RoleProvider
 import com.ideascale.authz.engine.providers.RelationshipProvider
 import com.ideascale.authz.engine.providers.ResourceContextProvider
 import com.ideascale.authz.engine.rules.ActionClassifier
@@ -18,7 +18,7 @@ data class PipelineDependencies(
     val resourceContextProvider: ResourceContextProvider,
     val relationshipProvider: RelationshipProvider,
     val attributeProvider: AttributeProvider,
-    val authorityProvider: AuthorityProvider,
+    val roleProvider: RoleProvider,
     val ruleRegistries: StageRuleRegistries = DefaultPolicyBundle.registries(),
     val actionClassifier: ActionClassifier = DefaultActionClassifier
 )
@@ -28,13 +28,13 @@ object PipelineAuthorizerFactory {
         val registries = deps.ruleRegistries
         val classifier = deps.actionClassifier
 
-        val evaluators = listOf(
-            ResourceScopeEvaluator(deps.resourceContextProvider, registries.resourceContext, classifier),
-            RelationshipEvaluator(deps.relationshipProvider, registries.relationship, classifier),
-            AttributeEvaluator(deps.attributeProvider, registries.attribute, classifier),
-            AuthorityEvaluator(deps.authorityProvider, registries.authority, classifier)
+        val steps = listOf(
+            ResourceContextEvaluationStep(deps.resourceContextProvider, registries.resourceContext, classifier),
+            RelationshipEvaluationStep(deps.relationshipProvider, registries.relationship, classifier),
+            AttributeEvaluationStep(deps.attributeProvider, registries.attribute, classifier),
+            RoleEvaluationStep(deps.roleProvider, registries.role, classifier)
         )
 
-        return PipelineAuthorizer(evaluators)
+        return PipelineAuthorizer(steps)
     }
 }

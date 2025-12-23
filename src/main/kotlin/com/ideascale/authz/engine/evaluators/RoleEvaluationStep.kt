@@ -1,35 +1,36 @@
 package com.ideascale.authz.engine.evaluators
 
 import com.ideascale.authz.core.ReasonCode
-import com.ideascale.authz.engine.EvalResult
 import com.ideascale.authz.engine.EvaluationContext
-import com.ideascale.authz.engine.providers.AuthorityProvider
+import com.ideascale.authz.engine.EvaluationStep
+import com.ideascale.authz.engine.StepResult
+import com.ideascale.authz.engine.providers.RoleProvider
 import com.ideascale.authz.engine.rules.ActionClassifier
 import com.ideascale.authz.engine.rules.RuleRegistry
 import com.ideascale.authz.engine.rules.Target
 
-class AuthorityEvaluator(
-    private val provider: AuthorityProvider,
+class RoleEvaluationStep(
+    private val provider: RoleProvider,
     private val registry: RuleRegistry,
     private val classifier: ActionClassifier
-) : com.ideascale.authz.engine.Evaluator {
-    override fun evaluate(ctx: EvaluationContext): EvalResult {
+) : EvaluationStep {
+    override fun evaluate(ctx: EvaluationContext): StepResult {
         val request = ctx.request
         val resource = request.resource
-        val rc = ctx.resourceContext
-            ?: return EvalResult.Stop(
-                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingResourceContext"))
+        val contextFacts = ctx.contextFacts
+            ?: return StepResult.Stop(
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingContextFacts"))
             )
-        val rf = ctx.relationshipFacts
-            ?: return EvalResult.Stop(
+        val relationshipFacts = ctx.relationshipFacts
+            ?: return StepResult.Stop(
                 ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingRelationshipFacts"))
             )
 
         val subject = request.subject
-        val authorities = ctx.memoize("authorities") {
-            provider.load(subject.workspaceId, subject.memberId, resource, rc, rf)
+        val roleFacts = ctx.memoize("roleFacts") {
+            provider.load(subject.workspaceId, subject.memberId, resource, contextFacts, relationshipFacts)
         }
-        ctx.authorities = authorities
+        ctx.roleFacts = roleFacts
 
         val target = Target(resource.type, classifier.groupOf(request.action))
         for (rule in registry.allowsFor(target)) {
@@ -37,14 +38,14 @@ class AuthorityEvaluator(
             if (allowDecision != null) {
                 val enriched = allowDecision.copy(
                     details = allowDecision.details + mapOf(
-                        "allowedByLayer" to "AUTHORITY",
+                        "allowedByLayer" to "ROLE",
                         "allowedByRuleId" to rule.id
                     )
                 )
-                return EvalResult.Stop(ctx.withBaseDetails(enriched))
+                return StepResult.Stop(ctx.withBaseDetails(enriched))
             }
         }
 
-        return EvalResult.Continue
+        return StepResult.Continue
     }
 }

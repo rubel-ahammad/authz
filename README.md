@@ -13,7 +13,7 @@ Framework-neutral Kotlin/JVM authorization library implementing Policy-Based Acc
                               │
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Engine Module                             │
-│  PipelineAuthorizer, Evaluators, Rules, Providers               │
+│  PipelineAuthorizer, EvaluationSteps, Rules, Providers          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -87,40 +87,75 @@ ResourceHierarchy.childrenOf(WORKSPACE)            // [COMMUNITY, MEMBER, GROUP,
 
 ## Authorization Pipeline
 
-The `PipelineAuthorizer` evaluates requests through four stages (deny-first):
+The `PipelineAuthorizer` evaluates requests through four steps (deny-first):
 
 ```
-Request ──► ResourceScopeEvaluator ──► RelationshipEvaluator ──► AttributeEvaluator ──► AuthorityEvaluator ──► Decision
-                    │                         │                        │                       │
-              Tenant check              Membership check         State constraints        Role/permission
-              Scope resolution          Ownership facts          ABAC deny rules          RBAC allow rules
+Request ──► ResourceContextStep ──► RelationshipStep ──► AttributeStep ──► RoleStep ──► Decision
+                    │                      │                   │                 │
+              Tenant check           Membership check    State constraints   Role-based
+              Context resolution     Ownership facts     ABAC deny rules     allow rules
 ```
 
-### Stage 1: ResourceScopeEvaluator
-- Resolves resource context (hierarchy)
+### Step 1: ResourceContextEvaluationStep
+- Loads resource context facts (hierarchy context)
 - Enforces tenant isolation (`workspaceId` match)
 - Applies resource-context deny rules
 
-### Stage 2: RelationshipEvaluator
+### Step 2: RelationshipEvaluationStep
 - Loads relationship facts (membership, ownership)
 - Verifies workspace membership
 - Applies relationship-based deny rules
 
-### Stage 3: AttributeEvaluator
+### Step 3: AttributeEvaluationStep
 - Loads attribute facts (subscription, member status, resource state)
 - Applies ABAC deny rules:
   - Workspace readonly mode
   - Campaign expired/readonly
   - Idea locked/archived
 
-### Stage 4: AuthorityEvaluator
-- Loads authorities (roles, permissions)
+### Step 4: RoleEvaluationStep
+- Loads role facts (workspace/community/campaign/group roles)
 - Applies allow rules:
   - Owner can write their resources
   - Campaign moderator can moderate
   - Workspace admin has full access
 
-**Fallback**: `DENY_DEFAULT` if no evaluator allows.
+**Fallback**: `DENY_DEFAULT` if no step allows.
+
+## Facts Model
+
+The pipeline collects four types of facts:
+
+```kotlin
+// Step 1: Resource context in the hierarchy
+sealed interface ResourceContextFacts {
+    val workspaceId: String
+}
+data class IdeaContextFacts(workspaceId, communityId, campaignId, ideaId)
+
+// Step 2: Subject's relationships to the resource
+data class RelationshipFacts(
+    val isWorkspaceMember: Boolean,
+    val isIdeaOwner: Boolean,
+    val viaGroupIds: Set<String>
+)
+
+// Step 3: State and configuration attributes
+data class AttributeFacts(
+    val workspace: WorkspaceAttrs,
+    val member: MemberAttrs,
+    val campaign: CampaignAttrs?,
+    val idea: IdeaAttrs?
+)
+
+// Step 4: Role assignments
+data class RoleFacts(
+    val workspaceRoles: Set<RoleId>,
+    val communityRoles: Set<RoleId>,
+    val campaignRoles: Set<RoleId>,
+    val groupRoles: Set<RoleId>
+)
+```
 
 ## Providers (Data Loading Interfaces)
 
@@ -128,19 +163,19 @@ Implement these to integrate with your data layer:
 
 ```kotlin
 interface ResourceContextProvider {
-    fun load(resource: ResourceRef): ResourceContext
+    fun load(resource: ResourceRef): ResourceContextFacts
 }
 
 interface RelationshipProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, rc: ResourceContext): RelationshipFacts
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContextFacts): RelationshipFacts
 }
 
 interface AttributeProvider {
-    fun load(...): AttributeFacts
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContextFacts, ctx: AuthzContext): AttributeFacts
 }
 
-interface AuthorityProvider {
-    fun load(...): Authorities
+interface RoleProvider {
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContextFacts, relationshipFacts: RelationshipFacts): RoleFacts
 }
 ```
 
@@ -190,14 +225,14 @@ ActionSemantics.groupOf(Action("typo.action"))      // UNKNOWN (denied)
 val resourceContextProvider: ResourceContextProvider = MyResourceContextProvider()
 val relationshipProvider: RelationshipProvider = MyRelationshipProvider()
 val attributeProvider: AttributeProvider = MyAttributeProvider()
-val authorityProvider: AuthorityProvider = MyAuthorityProvider()
+val roleProvider: RoleProvider = MyRoleProvider()
 
 // 2. Build authorizer
 val deps = PipelineDependencies(
     resourceContextProvider = resourceContextProvider,
     relationshipProvider = relationshipProvider,
     attributeProvider = attributeProvider,
-    authorityProvider = authorityProvider
+    roleProvider = roleProvider
 )
 val authorizer = PipelineAuthorizerFactory.build(deps)
 
@@ -273,14 +308,14 @@ src/main/kotlin/com/ideascale/authz/
     ├── Assembly.kt                # Factory and DI
     ├── AuthzRequest.kt
     ├── EvaluationContext.kt
-    ├── Evaluator.kt
-    ├── Model.kt                   # Facts and context types
+    ├── EvaluationStep.kt          # EvaluationStep interface, StepResult
+    ├── Model.kt                   # Facts types (ResourceContextFacts, RelationshipFacts, AttributeFacts, RoleFacts)
     ├── PipelineAuthorizer.kt
     ├── evaluators/
-    │   ├── AttributeEvaluator.kt
-    │   ├── AuthorityEvaluator.kt
-    │   ├── RelationshipEvaluator.kt
-    │   └── ResourceScopeEvaluator.kt
+    │   ├── AttributeEvaluationStep.kt
+    │   ├── RoleEvaluationStep.kt
+    │   ├── RelationshipEvaluationStep.kt
+    │   └── ResourceContextEvaluationStep.kt
     ├── policies/
     │   ├── PolicyBundle.kt
     │   └── rules/
@@ -288,7 +323,7 @@ src/main/kotlin/com/ideascale/authz/
     │       └── IdeaRules.kt
     ├── providers/
     │   ├── AttributeProvider.kt
-    │   ├── AuthorityProvider.kt
+    │   ├── RoleProvider.kt
     │   ├── RelationshipProvider.kt
     │   └── ResourceContextProvider.kt
     └── rules/

@@ -9,7 +9,7 @@ import com.ideascale.authz.core.ResourceRef
 import com.ideascale.authz.core.Subject
 
 class PipelineAuthorizer internal constructor(
-    private val evaluators: List<Evaluator>
+    private val steps: List<EvaluationStep>
 ) : Authorizer {
     override fun authorize(
         subject: Subject,
@@ -20,10 +20,10 @@ class PipelineAuthorizer internal constructor(
         val request = AuthzRequest(subject, action, resource, context)
         val evalCtx = EvaluationContext(request)
 
-        for (evaluator in evaluators) {
-            when (val result = evaluator.evaluate(evalCtx)) {
-                is EvalResult.Continue -> Unit
-                is EvalResult.Stop -> return evalCtx.withBaseDetails(result.decision)
+        for (step in steps) {
+            when (val result = step.evaluate(evalCtx)) {
+                is StepResult.Continue -> Unit
+                is StepResult.Stop -> return evalCtx.withBaseDetails(result.decision)
             }
         }
 

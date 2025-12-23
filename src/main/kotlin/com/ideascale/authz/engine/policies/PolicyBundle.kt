@@ -10,7 +10,7 @@ data class StageRuleRegistries(
     val resourceContext: RuleRegistry,
     val relationship: RuleRegistry,
     val attribute: RuleRegistry,
-    val authority: RuleRegistry
+    val role: RuleRegistry
 )
 
 object DefaultPolicyBundle {
@@ -27,14 +27,14 @@ object DefaultPolicyBundle {
         addAll(IdeaRules.attributeDenyRules())
     }
 
-    fun authorityRules(): List<AllowRule> = buildList {
-        addAll(IdeaRules.authorityAllowRules())
+    fun roleRules(): List<AllowRule> = buildList {
+        addAll(IdeaRules.roleAllowRules())
     }
 
     fun registries(): StageRuleRegistries = StageRuleRegistries(
         resourceContext = RuleRegistry(resourceContextRules(), emptyList()),
         relationship = RuleRegistry(relationshipRules(), emptyList()),
         attribute = RuleRegistry(attributeRules(), emptyList()),
-        authority = RuleRegistry(emptyList(), authorityRules())
+        role = RuleRegistry(emptyList(), roleRules())
     )
 }

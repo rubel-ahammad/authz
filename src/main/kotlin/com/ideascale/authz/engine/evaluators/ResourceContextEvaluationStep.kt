@@ -1,35 +1,36 @@
 package com.ideascale.authz.engine.evaluators
 
 import com.ideascale.authz.core.ReasonCode
-import com.ideascale.authz.engine.EvalResult
 import com.ideascale.authz.engine.EvaluationContext
+import com.ideascale.authz.engine.EvaluationStep
+import com.ideascale.authz.engine.StepResult
 import com.ideascale.authz.engine.providers.ResourceContextProvider
 import com.ideascale.authz.engine.rules.ActionClassifier
 import com.ideascale.authz.engine.rules.RuleRegistry
 import com.ideascale.authz.engine.rules.Target
 
-class ResourceScopeEvaluator(
+class ResourceContextEvaluationStep(
     private val provider: ResourceContextProvider,
     private val registry: RuleRegistry,
     private val classifier: ActionClassifier
-) : com.ideascale.authz.engine.Evaluator {
-    override fun evaluate(ctx: EvaluationContext): EvalResult {
+) : EvaluationStep {
+    override fun evaluate(ctx: EvaluationContext): StepResult {
         val request = ctx.request
         val subject = request.subject
         val resource = request.resource
 
-        val rc = provider.load(resource)
-        ctx.resourceContext = rc
+        val contextFacts = provider.load(resource)
+        ctx.contextFacts = contextFacts
 
-        if (rc.workspaceId != subject.workspaceId) {
-            return EvalResult.Stop(ctx.deny(ReasonCode.DENY_TENANT_MISMATCH))
+        if (contextFacts.workspaceId != subject.workspaceId) {
+            return StepResult.Stop(ctx.deny(ReasonCode.DENY_TENANT_MISMATCH))
         }
 
         val target = Target(resource.type, classifier.groupOf(request.action))
         for (rule in registry.deniesFor(target)) {
             val denyReason = rule.evaluate(ctx)
             if (denyReason != null) {
-                return EvalResult.Stop(
+                return StepResult.Stop(
                     ctx.deny(
                         denyReason,
                         details = mapOf(
@@ -41,6 +42,6 @@ class ResourceScopeEvaluator(
             }
         }
 
-        return EvalResult.Continue
+        return StepResult.Continue
     }
 }

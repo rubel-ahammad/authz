@@ -21,7 +21,7 @@ object IdeaRules {
         denyWritesWhenIdeaLockedOrArchived()
     )
 
-    fun authorityAllowRules(): List<AllowRule> = listOf(
+    fun roleAllowRules(): List<AllowRule> = listOf(
         allowIdeaWriteForOwner(),
         allowIdeaModerationForCampaignModerator(),
         allowAllForWorkspaceAdmin()
@@ -72,8 +72,8 @@ object IdeaRules {
             id = "idea.moderate.allow_campaign_moderator",
             target = Target(ResourceType.IDEA, ActionGroup.MODERATE)
         ) { ec: EvaluationContext ->
-            val authorities = ec.authorities ?: return@AllowRule null
-            if (RoleIds.CAMPAIGN_MODERATOR !in authorities.campaignRoles) return@AllowRule null
+            val roleFacts = ec.roleFacts ?: return@AllowRule null
+            if (RoleIds.CAMPAIGN_MODERATOR !in roleFacts.campaignRoles) return@AllowRule null
 
             ec.allow(
                 reason = ReasonCode.ALLOW_ROLE,
@@ -89,8 +89,8 @@ object IdeaRules {
             id = "workspace.admin.allow_all",
             target = Target(ResourceType.IDEA, ActionGroup.ADMIN)
         ) { ec: EvaluationContext ->
-            val authorities = ec.authorities ?: return@AllowRule null
-            if (RoleIds.WORKSPACE_ADMIN !in authorities.workspaceRoles) return@AllowRule null
+            val roleFacts = ec.roleFacts ?: return@AllowRule null
+            if (RoleIds.WORKSPACE_ADMIN !in roleFacts.workspaceRoles) return@AllowRule null
 
             ec.allow(
                 reason = ReasonCode.ALLOW_ROLE,

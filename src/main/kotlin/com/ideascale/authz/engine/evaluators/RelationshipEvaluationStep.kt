@@ -1,39 +1,40 @@
 package com.ideascale.authz.engine.evaluators
 
 import com.ideascale.authz.core.ReasonCode
-import com.ideascale.authz.engine.EvalResult
 import com.ideascale.authz.engine.EvaluationContext
+import com.ideascale.authz.engine.EvaluationStep
+import com.ideascale.authz.engine.StepResult
 import com.ideascale.authz.engine.providers.RelationshipProvider
 import com.ideascale.authz.engine.rules.ActionClassifier
 import com.ideascale.authz.engine.rules.RuleRegistry
 import com.ideascale.authz.engine.rules.Target
 
-class RelationshipEvaluator(
+class RelationshipEvaluationStep(
     private val provider: RelationshipProvider,
     private val registry: RuleRegistry,
     private val classifier: ActionClassifier
-) : com.ideascale.authz.engine.Evaluator {
-    override fun evaluate(ctx: EvaluationContext): EvalResult {
+) : EvaluationStep {
+    override fun evaluate(ctx: EvaluationContext): StepResult {
         val request = ctx.request
         val subject = request.subject
         val resource = request.resource
-        val rc = ctx.resourceContext
-            ?: return EvalResult.Stop(
-                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingResourceContext"))
+        val contextFacts = ctx.contextFacts
+            ?: return StepResult.Stop(
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingContextFacts"))
             )
 
-        val rf = provider.load(subject.workspaceId, subject.memberId, resource, rc)
+        val rf = provider.load(subject.workspaceId, subject.memberId, resource, contextFacts)
         ctx.relationshipFacts = rf
 
         if (!rf.isWorkspaceMember) {
-            return EvalResult.Stop(ctx.deny(ReasonCode.DENY_NOT_IN_SCOPE))
+            return StepResult.Stop(ctx.deny(ReasonCode.DENY_NOT_IN_SCOPE))
         }
 
         val target = Target(resource.type, classifier.groupOf(request.action))
         for (rule in registry.deniesFor(target)) {
             val denyReason = rule.evaluate(ctx)
             if (denyReason != null) {
-                return EvalResult.Stop(
+                return StepResult.Stop(
                     ctx.deny(
                         denyReason,
                         details = mapOf(
@@ -45,6 +46,6 @@ class RelationshipEvaluator(
             }
         }
 
-        return EvalResult.Continue
+        return StepResult.Continue
     }
 }
