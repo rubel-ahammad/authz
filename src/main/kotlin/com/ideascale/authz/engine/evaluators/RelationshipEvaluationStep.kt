@@ -4,13 +4,13 @@ import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.engine.EvaluationContext
 import com.ideascale.authz.engine.EvaluationStep
 import com.ideascale.authz.engine.StepResult
-import com.ideascale.authz.engine.providers.RelationshipProvider
+import com.ideascale.authz.engine.providers.RelationshipContextProvider
 import com.ideascale.authz.engine.rules.ActionClassifier
 import com.ideascale.authz.engine.rules.RuleRegistry
 import com.ideascale.authz.engine.rules.Target
 
 class RelationshipEvaluationStep(
-    private val provider: RelationshipProvider,
+    private val provider: RelationshipContextProvider,
     private val registry: RuleRegistry,
     private val classifier: ActionClassifier
 ) : EvaluationStep {
@@ -23,10 +23,10 @@ class RelationshipEvaluationStep(
                 ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingContextFacts"))
             )
 
-        val rf = provider.load(subject.workspaceId, subject.memberId, resource, contextFacts)
-        ctx.relationshipFacts = rf
+        val relationshipContext = provider.load(subject.workspaceId, subject.memberId, resource, contextFacts)
+        ctx.relationshipContext = relationshipContext
 
-        if (!rf.isWorkspaceMember) {
+        if (!relationshipContext.isWorkspaceMember) {
             return StepResult.Stop(ctx.deny(ReasonCode.DENY_NOT_IN_SCOPE))
         }
 

@@ -4,13 +4,13 @@ import com.ideascale.authz.core.ReasonCode
 import com.ideascale.authz.engine.EvaluationContext
 import com.ideascale.authz.engine.EvaluationStep
 import com.ideascale.authz.engine.StepResult
-import com.ideascale.authz.engine.providers.RoleProvider
+import com.ideascale.authz.engine.providers.RoleContextProvider
 import com.ideascale.authz.engine.rules.ActionClassifier
 import com.ideascale.authz.engine.rules.RuleRegistry
 import com.ideascale.authz.engine.rules.Target
 
 class RoleEvaluationStep(
-    private val provider: RoleProvider,
+    private val provider: RoleContextProvider,
     private val registry: RuleRegistry,
     private val classifier: ActionClassifier
 ) : EvaluationStep {
@@ -21,16 +21,16 @@ class RoleEvaluationStep(
             ?: return StepResult.Stop(
                 ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingContextFacts"))
             )
-        val relationshipFacts = ctx.relationshipFacts
+        val relationshipContext = ctx.relationshipContext
             ?: return StepResult.Stop(
-                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingRelationshipFacts"))
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingRelationshipContext"))
             )
 
         val subject = request.subject
-        val roleFacts = ctx.memoize("roleFacts") {
-            provider.load(subject.workspaceId, subject.memberId, resource, contextFacts, relationshipFacts)
+        val roleContext = ctx.memoize("roleContext") {
+            provider.load(subject.workspaceId, subject.memberId, resource, contextFacts, relationshipContext)
         }
-        ctx.roleFacts = roleFacts
+        ctx.roleContext = roleContext
 
         val target = Target(resource.type, classifier.groupOf(request.action))
         for (rule in registry.allowsFor(target)) {

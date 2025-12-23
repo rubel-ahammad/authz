@@ -1,35 +1,35 @@
 package com.ideascale.authz.engine
 
-sealed interface ResourceContextFacts {
+sealed interface ResourceContext {
     val workspaceId: String
 }
 
-data class WorkspaceContextFacts(
+data class WorkspaceContext(
     override val workspaceId: String
-) : ResourceContextFacts
+) : ResourceContext
 
-data class CommunityContextFacts(
+data class CommunityContext(
     override val workspaceId: String,
     val communityId: String
-) : ResourceContextFacts
+) : ResourceContext
 
-data class CampaignContextFacts(
+data class CampaignContext(
     override val workspaceId: String,
     val communityId: String,
     val campaignId: String
-) : ResourceContextFacts
+) : ResourceContext
 
-data class IdeaContextFacts(
+data class IdeaContext(
     override val workspaceId: String,
     val communityId: String,
     val campaignId: String,
     val ideaId: String
-) : ResourceContextFacts
+) : ResourceContext
 
-data class MemberContextFacts(
+data class MemberContext(
     override val workspaceId: String,
     val memberId: String
-) : ResourceContextFacts
+) : ResourceContext
 
 @JvmInline
 value class RoleId(val value: String) {
@@ -45,13 +45,13 @@ object RoleIds {
     val CAMPAIGN_MODERATOR = RoleId("CAMPAIGN_MODERATOR")
 }
 
-data class RelationshipFacts(
+data class RelationshipContext(
     val isWorkspaceMember: Boolean = false,
     val isIdeaOwner: Boolean = false,
     val viaGroupIds: Set<String> = emptySet()
 )
 
-data class AttributeFacts(
+data class AttributeContext(
     val workspace: WorkspaceAttrs,
     val member: MemberAttrs,
     val request: RequestAttrs,
@@ -122,7 +122,7 @@ sealed interface EmailDomainPolicy {
     data class Blocked(val domain: String) : EmailDomainPolicy
 }
 
-data class RoleFacts(
+data class RoleContext(
     val workspaceRoles: Set<RoleId> = emptySet(),
     val communityRoles: Set<RoleId> = emptySet(),
     val campaignRoles: Set<RoleId> = emptySet(),

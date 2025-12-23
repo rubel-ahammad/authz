@@ -96,7 +96,7 @@ Request ──► ResourceContextStep ──► RelationshipStep ──► Attri
               Context resolution     Ownership facts     ABAC deny rules     allow rules
 ```
 
-### Step 1: ResourceContextEvaluationStep
+### Step 1: ResourceEvaluationStep
 - Loads resource context facts (hierarchy context)
 - Enforces tenant isolation (`workspaceId` match)
 - Applies resource-context deny rules
@@ -128,20 +128,20 @@ The pipeline collects four types of facts:
 
 ```kotlin
 // Step 1: Resource context in the hierarchy
-sealed interface ResourceContextFacts {
+sealed interface ResourceContext {
     val workspaceId: String
 }
-data class IdeaContextFacts(workspaceId, communityId, campaignId, ideaId)
+data class IdeaContext(workspaceId, communityId, campaignId, ideaId)
 
 // Step 2: Subject's relationships to the resource
-data class RelationshipFacts(
+data class RelationshipContext(
     val isWorkspaceMember: Boolean,
     val isIdeaOwner: Boolean,
     val viaGroupIds: Set<String>
 )
 
 // Step 3: State and configuration attributes
-data class AttributeFacts(
+data class AttributeContext(
     val workspace: WorkspaceAttrs,
     val member: MemberAttrs,
     val campaign: CampaignAttrs?,
@@ -149,7 +149,7 @@ data class AttributeFacts(
 )
 
 // Step 4: Role assignments
-data class RoleFacts(
+data class RoleContext(
     val workspaceRoles: Set<RoleId>,
     val communityRoles: Set<RoleId>,
     val campaignRoles: Set<RoleId>,
@@ -163,19 +163,19 @@ Implement these to integrate with your data layer:
 
 ```kotlin
 interface ResourceContextProvider {
-    fun load(resource: ResourceRef): ResourceContextFacts
+    fun load(resource: ResourceRef): ResourceContext
 }
 
-interface RelationshipProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContextFacts): RelationshipFacts
+interface RelationshipContextProvider {
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContext): RelationshipContext
 }
 
-interface AttributeProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContextFacts, ctx: AuthzContext): AttributeFacts
+interface AttributeContextProvider {
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContext, ctx: AuthzContext): AttributeContext
 }
 
-interface RoleProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContextFacts, relationshipFacts: RelationshipFacts): RoleFacts
+interface RoleContextProvider {
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContext, relationshipContext: RelationshipContext): RoleContext
 }
 ```
 
@@ -189,7 +189,7 @@ DenyRule(
     id = "idea.state.deny_write",
     target = Target(ResourceType.IDEA, ActionGroup.WRITE)
 ) { ctx ->
-    when (ctx.attributeFacts?.idea?.state) {
+    when (ctx.attributeContext?.idea?.state) {
         IdeaState.LOCKED -> ReasonCode.DENY_IDEA_LOCKED
         IdeaState.ARCHIVED -> ReasonCode.DENY_IDEA_ARCHIVED
         else -> null
@@ -201,7 +201,7 @@ AllowRule(
     id = "idea.write.allow_owner",
     target = Target(ResourceType.IDEA, ActionGroup.WRITE)
 ) { ctx ->
-    if (ctx.relationshipFacts?.isIdeaOwner == true) {
+    if (ctx.relationshipContext?.isIdeaOwner == true) {
         ctx.allow(ReasonCode.ALLOW_OWNER)
     } else null
 }
@@ -223,16 +223,16 @@ ActionSemantics.groupOf(Action("typo.action"))      // UNKNOWN (denied)
 ```kotlin
 // 1. Implement providers
 val resourceContextProvider: ResourceContextProvider = MyResourceContextProvider()
-val relationshipProvider: RelationshipProvider = MyRelationshipProvider()
-val attributeProvider: AttributeProvider = MyAttributeProvider()
-val roleProvider: RoleProvider = MyRoleProvider()
+val relationshipContextProvider: RelationshipContextProvider = MyRelationshipContextProvider()
+val attributeContextProvider: AttributeContextProvider = MyAttributeContextProvider()
+val roleContextProvider: RoleContextProvider = MyRoleContextProvider()
 
 // 2. Build authorizer
 val deps = PipelineDependencies(
     resourceContextProvider = resourceContextProvider,
-    relationshipProvider = relationshipProvider,
-    attributeProvider = attributeProvider,
-    roleProvider = roleProvider
+    relationshipContextProvider = relationshipContextProvider,
+    attributeContextProvider = attributeContextProvider,
+    roleContextProvider = roleContextProvider
 )
 val authorizer = PipelineAuthorizerFactory.build(deps)
 
@@ -309,22 +309,22 @@ src/main/kotlin/com/ideascale/authz/
     ├── AuthzRequest.kt
     ├── EvaluationContext.kt
     ├── EvaluationStep.kt          # EvaluationStep interface, StepResult
-    ├── Model.kt                   # Facts types (ResourceContextFacts, RelationshipFacts, AttributeFacts, RoleFacts)
+    ├── Model.kt                   # Facts types (ResourceContext, RelationshipContext, AttributeContext, RoleContext)
     ├── PipelineAuthorizer.kt
     ├── evaluators/
     │   ├── AttributeEvaluationStep.kt
     │   ├── RoleEvaluationStep.kt
     │   ├── RelationshipEvaluationStep.kt
-    │   └── ResourceContextEvaluationStep.kt
+    │   └── ResourceEvaluationStep.kt
     ├── policies/
     │   ├── PolicyBundle.kt
     │   └── rules/
     │       ├── GlobalRules.kt
     │       └── IdeaRules.kt
     ├── providers/
-    │   ├── AttributeProvider.kt
-    │   ├── RoleProvider.kt
-    │   ├── RelationshipProvider.kt
+    │   ├── AttributeContextProvider.kt
+    │   ├── RoleContextProvider.kt
+    │   ├── RelationshipContextProvider.kt
     │   └── ResourceContextProvider.kt
     └── rules/
         └── Rules.kt               # Rule types and registry

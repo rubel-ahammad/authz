@@ -2,15 +2,15 @@ package com.ideascale.authz.engine.providers
 
 import com.ideascale.authz.core.AuthzContext
 import com.ideascale.authz.core.ResourceRef
-import com.ideascale.authz.engine.AttributeFacts
-import com.ideascale.authz.engine.ResourceContextFacts
+import com.ideascale.authz.engine.AttributeContext
+import com.ideascale.authz.engine.ResourceContext
 
-interface AttributeProvider {
+interface AttributeContextProvider {
     fun load(
         workspaceId: String,
         memberId: String,
         resource: ResourceRef,
-        contextFacts: ResourceContextFacts,
+        contextFacts: ResourceContext,
         ctx: AuthzContext
-    ): AttributeFacts
+    ): AttributeContext
 }

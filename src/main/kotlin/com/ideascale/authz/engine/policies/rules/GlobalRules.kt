@@ -16,7 +16,7 @@ object GlobalRules {
             id = "global.workspace.readonly.deny_write",
             target = Target.global(ActionGroup.WRITE)
         ) { ec: EvaluationContext ->
-            val facts = ec.attributeFacts ?: return@DenyRule null
+            val facts = ec.attributeContext ?: return@DenyRule null
             if (facts.workspace.flags.isReadOnlyMode) ReasonCode.DENY_WORKSPACE_READONLY else null
         }
 }

@@ -7,10 +7,10 @@ import com.ideascale.authz.core.ReasonCode
 class EvaluationContext(
     val request: AuthzRequest
 ) {
-    var contextFacts: ResourceContextFacts? = null
-    var relationshipFacts: RelationshipFacts? = null
-    var attributeFacts: AttributeFacts? = null
-    var roleFacts: RoleFacts? = null
+    var contextFacts: ResourceContext? = null
+    var relationshipContext: RelationshipContext? = null
+    var attributeContext: AttributeContext? = null
+    var roleContext: RoleContext? = null
 
     private val memo: MutableMap<String, Any?> = mutableMapOf()
 

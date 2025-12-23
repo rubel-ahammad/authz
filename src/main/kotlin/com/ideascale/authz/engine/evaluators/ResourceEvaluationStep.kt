@@ -9,7 +9,7 @@ import com.ideascale.authz.engine.rules.ActionClassifier
 import com.ideascale.authz.engine.rules.RuleRegistry
 import com.ideascale.authz.engine.rules.Target
 
-class ResourceContextEvaluationStep(
+class ResourceEvaluationStep(
     private val provider: ResourceContextProvider,
     private val registry: RuleRegistry,
     private val classifier: ActionClassifier

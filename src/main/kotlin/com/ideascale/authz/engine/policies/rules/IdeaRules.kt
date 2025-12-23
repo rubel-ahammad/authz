@@ -32,7 +32,7 @@ object IdeaRules {
             id = "idea.campaign.state.deny_write",
             target = Target(ResourceType.IDEA, ActionGroup.WRITE)
         ) { ec: EvaluationContext ->
-            val facts = ec.attributeFacts ?: return@DenyRule null
+            val facts = ec.attributeContext ?: return@DenyRule null
             when (facts.campaign?.state) {
                 CampaignState.READONLY -> ReasonCode.DENY_RESOURCE_READONLY
                 CampaignState.EXPIRED -> ReasonCode.DENY_CAMPAIGN_EXPIRED
@@ -45,7 +45,7 @@ object IdeaRules {
             id = "idea.state.deny_write",
             target = Target(ResourceType.IDEA, ActionGroup.WRITE)
         ) { ec: EvaluationContext ->
-            val facts = ec.attributeFacts ?: return@DenyRule null
+            val facts = ec.attributeContext ?: return@DenyRule null
             when (facts.idea?.state) {
                 IdeaState.LOCKED -> ReasonCode.DENY_IDEA_LOCKED
                 IdeaState.ARCHIVED -> ReasonCode.DENY_IDEA_ARCHIVED
@@ -58,8 +58,8 @@ object IdeaRules {
             id = "idea.write.allow_owner",
             target = Target(ResourceType.IDEA, ActionGroup.WRITE)
         ) { ec: EvaluationContext ->
-            val rf = ec.relationshipFacts ?: return@AllowRule null
-            if (!rf.isIdeaOwner) return@AllowRule null
+            val relationshipContext = ec.relationshipContext ?: return@AllowRule null
+            if (!relationshipContext.isIdeaOwner) return@AllowRule null
 
             ec.allow(
                 reason = ReasonCode.ALLOW_OWNER,
@@ -72,8 +72,8 @@ object IdeaRules {
             id = "idea.moderate.allow_campaign_moderator",
             target = Target(ResourceType.IDEA, ActionGroup.MODERATE)
         ) { ec: EvaluationContext ->
-            val roleFacts = ec.roleFacts ?: return@AllowRule null
-            if (RoleIds.CAMPAIGN_MODERATOR !in roleFacts.campaignRoles) return@AllowRule null
+            val roleContext = ec.roleContext ?: return@AllowRule null
+            if (RoleIds.CAMPAIGN_MODERATOR !in roleContext.campaignRoles) return@AllowRule null
 
             ec.allow(
                 reason = ReasonCode.ALLOW_ROLE,
@@ -89,8 +89,8 @@ object IdeaRules {
             id = "workspace.admin.allow_all",
             target = Target(ResourceType.IDEA, ActionGroup.ADMIN)
         ) { ec: EvaluationContext ->
-            val roleFacts = ec.roleFacts ?: return@AllowRule null
-            if (RoleIds.WORKSPACE_ADMIN !in roleFacts.workspaceRoles) return@AllowRule null
+            val roleContext = ec.roleContext ?: return@AllowRule null
+            if (RoleIds.WORKSPACE_ADMIN !in roleContext.workspaceRoles) return@AllowRule null
 
             ec.allow(
                 reason = ReasonCode.ALLOW_ROLE,
