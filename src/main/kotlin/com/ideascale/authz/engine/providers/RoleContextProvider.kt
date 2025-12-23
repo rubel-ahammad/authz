@@ -10,7 +10,7 @@ interface RoleContextProvider {
         workspaceId: String,
         memberId: String,
         resource: ResourceRef,
-        contextFacts: ResourceContext,
+        resourceContext: ResourceContext,
         relationshipContext: RelationshipContext
     ): RoleContext
 }

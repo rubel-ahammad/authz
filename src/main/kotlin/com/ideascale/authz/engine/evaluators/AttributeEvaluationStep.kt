@@ -16,9 +16,9 @@ class AttributeEvaluationStep(
 ) : EvaluationStep {
     override fun evaluate(ctx: EvaluationContext): StepResult {
         val request = ctx.request
-        val contextFacts = ctx.contextFacts
+        val resourceContext = ctx.resourceContext
             ?: return StepResult.Stop(
-                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingContextFacts"))
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingResourceContext"))
             )
         if (ctx.relationshipContext == null) {
             return StepResult.Stop(
@@ -29,7 +29,7 @@ class AttributeEvaluationStep(
         val subject = request.subject
 
         val attributeContext = ctx.memoize("attributeContext") {
-            provider.load(subject.workspaceId, subject.memberId, request.resource, contextFacts, request.context)
+            provider.load(subject.workspaceId, subject.memberId, request.resource, resourceContext, request.context)
         }
         ctx.attributeContext = attributeContext
 

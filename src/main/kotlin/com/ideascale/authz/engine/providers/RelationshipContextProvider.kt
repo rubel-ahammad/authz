@@ -9,6 +9,6 @@ interface RelationshipContextProvider {
         workspaceId: String,
         memberId: String,
         resource: ResourceRef,
-        contextFacts: ResourceContext
+        resourceContext: ResourceContext
     ): RelationshipContext
 }

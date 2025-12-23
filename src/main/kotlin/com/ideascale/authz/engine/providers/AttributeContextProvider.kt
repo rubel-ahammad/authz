@@ -10,7 +10,7 @@ interface AttributeContextProvider {
         workspaceId: String,
         memberId: String,
         resource: ResourceRef,
-        contextFacts: ResourceContext,
+        resourceContext: ResourceContext,
         ctx: AuthzContext
     ): AttributeContext
 }

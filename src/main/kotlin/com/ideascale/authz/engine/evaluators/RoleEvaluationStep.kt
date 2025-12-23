@@ -17,9 +17,9 @@ class RoleEvaluationStep(
     override fun evaluate(ctx: EvaluationContext): StepResult {
         val request = ctx.request
         val resource = request.resource
-        val contextFacts = ctx.contextFacts
+        val resourceContext = ctx.resourceContext
             ?: return StepResult.Stop(
-                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingContextFacts"))
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingResourceContext"))
             )
         val relationshipContext = ctx.relationshipContext
             ?: return StepResult.Stop(
@@ -28,7 +28,7 @@ class RoleEvaluationStep(
 
         val subject = request.subject
         val roleContext = ctx.memoize("roleContext") {
-            provider.load(subject.workspaceId, subject.memberId, resource, contextFacts, relationshipContext)
+            provider.load(subject.workspaceId, subject.memberId, resource, resourceContext, relationshipContext)
         }
         ctx.roleContext = roleContext
 

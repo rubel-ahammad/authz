@@ -7,7 +7,7 @@ import com.ideascale.authz.core.ReasonCode
 class EvaluationContext(
     val request: AuthzRequest
 ) {
-    var contextFacts: ResourceContext? = null
+    var resourceContext: ResourceContext? = null
     var relationshipContext: RelationshipContext? = null
     var attributeContext: AttributeContext? = null
     var roleContext: RoleContext? = null

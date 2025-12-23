@@ -18,12 +18,12 @@ class RelationshipEvaluationStep(
         val request = ctx.request
         val subject = request.subject
         val resource = request.resource
-        val contextFacts = ctx.contextFacts
+        val resourceContext = ctx.resourceContext
             ?: return StepResult.Stop(
-                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingContextFacts"))
+                ctx.deny(ReasonCode.DENY_DEFAULT, details = mapOf("error" to "missingResourceContext"))
             )
 
-        val relationshipContext = provider.load(subject.workspaceId, subject.memberId, resource, contextFacts)
+        val relationshipContext = provider.load(subject.workspaceId, subject.memberId, resource, resourceContext)
         ctx.relationshipContext = relationshipContext
 
         if (!relationshipContext.isWorkspaceMember) {

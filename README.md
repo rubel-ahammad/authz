@@ -167,15 +167,15 @@ interface ResourceContextProvider {
 }
 
 interface RelationshipContextProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContext): RelationshipContext
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, resourceContext: ResourceContext): RelationshipContext
 }
 
 interface AttributeContextProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContext, ctx: AuthzContext): AttributeContext
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, resourceContext: ResourceContext, ctx: AuthzContext): AttributeContext
 }
 
 interface RoleContextProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, contextFacts: ResourceContext, relationshipContext: RelationshipContext): RoleContext
+    fun load(workspaceId: String, memberId: String, resource: ResourceRef, resourceContext: ResourceContext, relationshipContext: RelationshipContext): RoleContext
 }
 ```
 

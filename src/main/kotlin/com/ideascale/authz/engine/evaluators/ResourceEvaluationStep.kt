@@ -19,10 +19,10 @@ class ResourceEvaluationStep(
         val subject = request.subject
         val resource = request.resource
 
-        val contextFacts = provider.load(resource)
-        ctx.contextFacts = contextFacts
+        val resourceContext = provider.load(resource)
+        ctx.resourceContext = resourceContext
 
-        if (contextFacts.workspaceId != subject.workspaceId) {
+        if (resourceContext.workspaceId != subject.workspaceId) {
             return StepResult.Stop(ctx.deny(ReasonCode.DENY_TENANT_MISMATCH))
         }
 
