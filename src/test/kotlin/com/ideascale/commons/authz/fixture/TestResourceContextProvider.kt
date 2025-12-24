@@ -1,5 +1,6 @@
 package com.ideascale.commons.authz.fixture
 
+import com.ideascale.commons.authz.context.CommunityContext
 import com.ideascale.commons.authz.context.ResourceContext
 import com.ideascale.commons.authz.context.WorkspaceContext
 import com.ideascale.commons.authz.context.provider.ResourceContextProvider
@@ -19,6 +20,16 @@ class TestResourceContextProvider(
         fun forWorkspace(workspaceId: String = TestSubjects.WORKSPACE_ID): TestResourceContextProvider {
             return TestResourceContextProvider(
                 contexts = mapOf(workspaceId to WorkspaceContext(workspaceId)),
+                defaultWorkspaceId = workspaceId
+            )
+        }
+
+        fun forCommunity(
+            communityId: String,
+            workspaceId: String = TestSubjects.WORKSPACE_ID
+        ): TestResourceContextProvider {
+            return TestResourceContextProvider(
+                contexts = mapOf(communityId to CommunityContext(workspaceId, communityId)),
                 defaultWorkspaceId = workspaceId
             )
         }

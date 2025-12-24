@@ -11,6 +11,7 @@ class TestRoleContextProvider private constructor(
     private val workspaceAdmins: Set<String>,
     private val workspaceMembers: Set<String>,
     private val communityAdmins: Map<String, Set<String>>,
+    private val communityMembers: Map<String, Set<String>>,
     private val campaignAdmins: Map<String, Set<String>>
 ) : RoleContextProvider {
 
@@ -42,8 +43,13 @@ class TestRoleContextProvider private constructor(
         // Build community roles based on resource context
         val communityRoles = buildSet {
             val communityId = extractCommunityId(resourceContext)
-            if (communityId != null && memberId in (communityAdmins[communityId] ?: emptySet())) {
-                add(RoleIds.ADMIN)
+            if (communityId != null) {
+                if (memberId in (communityAdmins[communityId] ?: emptySet())) {
+                    add(RoleIds.ADMIN)
+                }
+                if (memberId in (communityMembers[communityId] ?: emptySet())) {
+                    add(RoleIds.COMMUNITY_MEMBER)
+                }
             }
         }
 
@@ -83,6 +89,7 @@ class TestRoleContextProvider private constructor(
         private val workspaceAdmins = mutableSetOf<String>()
         private val workspaceMembers = mutableSetOf<String>()
         private val communityAdmins = mutableMapOf<String, MutableSet<String>>()
+        private val communityMembers = mutableMapOf<String, MutableSet<String>>()
         private val campaignAdmins = mutableMapOf<String, MutableSet<String>>()
 
         fun withWorkspaceAdmin(memberId: String) = apply {
@@ -97,6 +104,10 @@ class TestRoleContextProvider private constructor(
             communityAdmins.getOrPut(communityId) { mutableSetOf() }.add(memberId)
         }
 
+        fun withCommunityMember(communityId: String, memberId: String) = apply {
+            communityMembers.getOrPut(communityId) { mutableSetOf() }.add(memberId)
+        }
+
         fun withCampaignAdmin(campaignId: String, memberId: String) = apply {
             campaignAdmins.getOrPut(campaignId) { mutableSetOf() }.add(memberId)
         }
@@ -105,6 +116,7 @@ class TestRoleContextProvider private constructor(
             workspaceAdmins = workspaceAdmins.toSet(),
             workspaceMembers = workspaceMembers.toSet(),
             communityAdmins = communityAdmins.mapValues { it.value.toSet() },
+            communityMembers = communityMembers.mapValues { it.value.toSet() },
             campaignAdmins = campaignAdmins.mapValues { it.value.toSet() }
         )
     }

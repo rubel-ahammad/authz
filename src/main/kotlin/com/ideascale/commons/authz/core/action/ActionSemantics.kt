@@ -8,6 +8,7 @@ object ActionSemantics {
     private val actionGroups: Map<String, ActionGroup> = buildMap {
         // READ actions
         put(WorkspaceActions.READ.id, ActionGroup.READ)
+        put(CommunityActions.READ.id, ActionGroup.READ)
         put(IdeaActions.READ.id, ActionGroup.READ)
         put(IdeaActions.LIST.id, ActionGroup.READ)
         put(CampaignActions.READ.id, ActionGroup.READ)
@@ -17,6 +18,7 @@ object ActionSemantics {
 
         // WRITE actions
         put(WorkspaceActions.UPDATE.id, ActionGroup.WRITE)
+        put(CommunityActions.UPDATE.id, ActionGroup.WRITE)
         put(IdeaActions.CREATE.id, ActionGroup.WRITE)
         put(IdeaActions.EDIT.id, ActionGroup.WRITE)
         put(IdeaActions.DELETE.id, ActionGroup.WRITE)

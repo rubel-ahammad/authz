@@ -1,57 +1,6 @@
 package com.ideascale.commons.authz.context
 
-sealed interface ResourceContext {
-    val workspaceId: String
-}
-
-data class WorkspaceContext(
-    override val workspaceId: String
-) : ResourceContext
-
-data class CommunityContext(
-    override val workspaceId: String,
-    val communityId: String
-) : ResourceContext
-
-data class CampaignContext(
-    override val workspaceId: String,
-    val communityId: String,
-    val campaignId: String
-) : ResourceContext
-
-data class IdeaContext(
-    override val workspaceId: String,
-    val communityId: String,
-    val campaignId: String,
-    val ideaId: String
-) : ResourceContext
-
-data class MemberContext(
-    override val workspaceId: String,
-    val memberId: String
-) : ResourceContext
-
-@JvmInline
-value class RoleId(val value: String) {
-    init {
-        require(value.isNotBlank()) { "RoleId cannot be blank" }
-    }
-
-    override fun toString(): String = value
-}
-
-object RoleIds {
-    val WORKSPACE_ADMIN = RoleId("WORKSPACE_ADMIN")
-    val WORKSPACE_MEMBER = RoleId("WORKSPACE_MEMBER")
-    val CAMPAIGN_MODERATOR = RoleId("CAMPAIGN_MODERATOR")
-    val ANONYMOUS = RoleId("ANONYMOUS")
-    val ADMIN = RoleId("ADMIN")
-}
-
-data class RelationshipContext(
-    val isIdeaOwner: Boolean = false,
-    val viaGroupIds: Set<String> = emptySet()
-)
+import com.ideascale.commons.authz.core.Channel
 
 data class AttributeContext(
     val workspace: WorkspaceAttrs,
@@ -103,7 +52,7 @@ data class IdeaAttrs(
 
 data class RequestAttrs(
     val ip: String?,
-    val channel: com.ideascale.commons.authz.core.Channel,
+    val channel: Channel,
     val userAgent: String? = null
 )
 
@@ -123,10 +72,3 @@ sealed interface EmailDomainPolicy {
     data class Allowed(val domain: String) : EmailDomainPolicy
     data class Blocked(val domain: String) : EmailDomainPolicy
 }
-
-data class RoleContext(
-    val workspaceRoles: Set<RoleId> = emptySet(),
-    val communityRoles: Set<RoleId> = emptySet(),
-    val campaignRoles: Set<RoleId> = emptySet(),
-    val groupRoles: Set<RoleId> = emptySet()
-)
