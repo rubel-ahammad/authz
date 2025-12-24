@@ -3,7 +3,7 @@ package com.ideascale.commons.authz.fixture
 import com.ideascale.commons.authz.context.RelationshipContext
 import com.ideascale.commons.authz.context.ResourceContext
 import com.ideascale.commons.authz.context.provider.RelationshipContextProvider
-import com.ideascale.commons.authz.core.ResourceRef
+import com.ideascale.commons.authz.resource.ResourceRef
 
 class TestRelationshipContextProvider(
     private val ideaOwners: Map<String, String> = emptyMap(),

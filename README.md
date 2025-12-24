@@ -285,58 +285,60 @@ val logFields = decision.toLogFields(subject, IdeaActions.EDIT, resource, contex
 
 ```
 src/main/kotlin/com/ideascale/commons/authz/
-├── core/                          # Stable, transport-neutral types
+├── AuthzContext.kt
+├── Authorizer.kt
+├── Channel.kt
+├── PrincipalType.kt
+├── Subject.kt
+├── Assembly.kt                   # Factory and DI
+├── AuthzRequest.kt
+├── EvaluationContext.kt
+├── EvaluationStep.kt             # EvaluationStep interface, StepResult
+├── PipelineAuthorizer.kt
+├── action/
 │   ├── Action.kt
 │   ├── ActionGroup.kt
-│   ├── AuthzContext.kt
-│   ├── Authorizer.kt
-│   ├── Channel.kt
+│   ├── ActionSemantics.kt        # Action → ActionGroup registry
+│   ├── CampaignActions.kt
+│   ├── CommunityActions.kt
+│   ├── IdeaActions.kt
+│   ├── MemberActions.kt
+│   └── WorkspaceActions.kt
+├── decision/
 │   ├── Decision.kt
 │   ├── DecisionLogFields.kt
 │   ├── Effect.kt
-│   ├── ResourceHierarchy.kt       # Declarative resource hierarchy
 │   ├── Obligation.kt
-│   ├── PrincipalType.kt
-│   ├── ReasonCode.kt
+│   └── ReasonCode.kt
+├── resource/
+│   ├── ResourceHierarchy.kt      # Declarative resource hierarchy
 │   ├── ResourceRef.kt
-│   ├── ResourceType.kt
-│   ├── Subject.kt
-│   └── action/
-│       ├── ActionSemantics.kt     # Action → ActionGroup registry
-│       ├── CampaignActions.kt
-│       ├── CommunityActions.kt
-│       ├── IdeaActions.kt
-│       ├── MemberActions.kt
-│       └── WorkspaceActions.kt
+│   └── ResourceType.kt
 ├── context/                       # Evaluation context models
 │   ├── AttributeContext.kt
 │   ├── RelationshipContext.kt
 │   ├── ResourceContext.kt
 │   ├── RoleContext.kt
-│   └── RoleIds.kt
+│   ├── RoleIds.kt
 │   └── provider/
 │       ├── AttributeContextProvider.kt
 │       ├── RoleContextProvider.kt
 │       ├── RelationshipContextProvider.kt
 │       └── ResourceContextProvider.kt
-├── engine/                        # Pipeline implementation
-    ├── Assembly.kt                # Factory and DI
-    ├── AuthzRequest.kt
-    ├── EvaluationContext.kt
-    ├── EvaluationStep.kt          # EvaluationStep interface, StepResult
-    ├── PipelineAuthorizer.kt
+└── policy/                        # Rule DSL and default policies
+    ├── PolicyBundle.kt
+    ├── catalog/
+    │   ├── CommunityRules.kt
+    │   ├── GlobalRules.kt
+    │   ├── IdeaRules.kt
+    │   └── WorkspaceRules.kt
+    ├── dsl/
+    │   └── RuleDsl.kt
     ├── evaluator/
     │   ├── AttributeEvaluationStep.kt
     │   ├── RoleEvaluationStep.kt
     │   ├── RelationshipEvaluationStep.kt
     │   └── ResourceEvaluationStep.kt
-└── policy/                        # Rule DSL and default policies
-    ├── PolicyBundle.kt
-    ├── default/
-    │   ├── GlobalRules.kt
-    │   └── IdeaRules.kt
-    ├── dsl/
-    │   └── RuleDsl.kt
     └── rule/
         └── Rules.kt               # Rule types and registry
 ```

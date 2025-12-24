@@ -1,6 +1,6 @@
 package com.ideascale.commons.authz.fixture
 
-import com.ideascale.commons.authz.core.Subject
+import com.ideascale.commons.authz.Subject
 
 object TestSubjects {
     const val WORKSPACE_ID = "test-workspace-1"

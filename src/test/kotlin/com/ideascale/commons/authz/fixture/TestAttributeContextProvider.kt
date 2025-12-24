@@ -2,9 +2,9 @@ package com.ideascale.commons.authz.fixture
 
 import com.ideascale.commons.authz.context.*
 import com.ideascale.commons.authz.context.provider.AttributeContextProvider
-import com.ideascale.commons.authz.core.AuthzContext
-import com.ideascale.commons.authz.core.Channel
-import com.ideascale.commons.authz.core.ResourceRef
+import com.ideascale.commons.authz.AuthzContext
+import com.ideascale.commons.authz.Channel
+import com.ideascale.commons.authz.resource.ResourceRef
 
 class TestAttributeContextProvider(
     private val attributeContext: AttributeContext

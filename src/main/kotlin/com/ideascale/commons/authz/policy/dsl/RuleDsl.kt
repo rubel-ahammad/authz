@@ -1,10 +1,10 @@
 package com.ideascale.commons.authz.policy.dsl
 
-import com.ideascale.commons.authz.core.ActionGroup
-import com.ideascale.commons.authz.core.Decision
-import com.ideascale.commons.authz.core.ReasonCode
-import com.ideascale.commons.authz.core.ResourceType
-import com.ideascale.commons.authz.engine.EvaluationContext
+import com.ideascale.commons.authz.action.ActionGroup
+import com.ideascale.commons.authz.decision.Decision
+import com.ideascale.commons.authz.decision.ReasonCode
+import com.ideascale.commons.authz.resource.ResourceType
+import com.ideascale.commons.authz.EvaluationContext
 import com.ideascale.commons.authz.policy.rule.AllowRule
 import com.ideascale.commons.authz.policy.rule.DenyRule
 import com.ideascale.commons.authz.policy.rule.Target

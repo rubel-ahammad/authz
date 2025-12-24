@@ -4,7 +4,7 @@ import com.ideascale.commons.authz.context.CommunityContext
 import com.ideascale.commons.authz.context.ResourceContext
 import com.ideascale.commons.authz.context.WorkspaceContext
 import com.ideascale.commons.authz.context.provider.ResourceContextProvider
-import com.ideascale.commons.authz.core.ResourceRef
+import com.ideascale.commons.authz.resource.ResourceRef
 
 class TestResourceContextProvider(
     private val contexts: Map<String, ResourceContext> = emptyMap(),

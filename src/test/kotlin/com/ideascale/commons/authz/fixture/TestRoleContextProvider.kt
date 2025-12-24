@@ -5,7 +5,7 @@ import com.ideascale.commons.authz.context.ResourceContext
 import com.ideascale.commons.authz.context.RoleContext
 import com.ideascale.commons.authz.context.RoleIds
 import com.ideascale.commons.authz.context.provider.RoleContextProvider
-import com.ideascale.commons.authz.core.ResourceRef
+import com.ideascale.commons.authz.resource.ResourceRef
 
 class TestRoleContextProvider private constructor(
     private val workspaceAdmins: Set<String>,

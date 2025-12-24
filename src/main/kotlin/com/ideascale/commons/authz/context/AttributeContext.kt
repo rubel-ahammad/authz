@@ -1,6 +1,6 @@
 package com.ideascale.commons.authz.context
 
-import com.ideascale.commons.authz.core.Channel
+import com.ideascale.commons.authz.Channel
 
 data class AttributeContext(
     val workspace: WorkspaceAttrs,
