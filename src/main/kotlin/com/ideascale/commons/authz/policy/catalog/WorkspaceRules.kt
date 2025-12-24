@@ -6,14 +6,32 @@ import com.ideascale.commons.authz.core.ResourceType
 import com.ideascale.commons.authz.context.RoleIds
 import com.ideascale.commons.authz.engine.EvaluationContext
 import com.ideascale.commons.authz.policy.dsl.allow
+import com.ideascale.commons.authz.policy.dsl.deny
+import com.ideascale.commons.authz.policy.rule.DenyRule
 import com.ideascale.commons.authz.policy.rule.AllowRule
 
 object WorkspaceRules {
+
+    fun attributeDenyRules(): List<DenyRule> =
+        ActionGroup.entries.map { denyAnonymousWhenWorkspacePrivate(it) }
 
     fun roleAllowRules(): List<AllowRule> = listOf(
         allowReadForAnyRole(),
         allowWriteForWorkspaceAdmin()
     )
+
+    private fun denyAnonymousWhenWorkspacePrivate(actionGroup: ActionGroup): DenyRule =
+        deny {
+            id("workspace.private.deny_anonymous.${actionGroup.name.lowercase()}")
+            target(ResourceType.WORKSPACE, actionGroup)
+            condition { ec: EvaluationContext ->
+                val facts = ec.attributeContext ?: return@condition null
+                if (facts.workspace.flags.isPublic) return@condition null
+                if (!ec.request.subject.isAnonymous) return@condition null
+
+                ReasonCode.DENY_WORKSPACE_PRIVATE
+            }
+        }
 
     private fun allowReadForAnyRole(): AllowRule =
         allow {

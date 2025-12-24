@@ -31,6 +31,7 @@ data class EmailDomainAttrs(
 )
 
 data class WorkspaceFlags(
+    val isPublic: Boolean = false,
     val isReadOnlyMode: Boolean = false
 )
 

@@ -33,6 +33,23 @@ class WorkspaceAuthorizationTest {
     }
 
     @Test
+    fun `anonymous user cannot read private workspace`() {
+        val authorizer = buildAuthorizer(
+            roleProvider = TestRoleContextProvider.builder().build(),
+            attributeProvider = TestAttributeContextProvider.privateWorkspace()
+        )
+
+        val decision = authorizer.authorize(
+            subject = TestSubjects.anonymous,
+            action = WorkspaceActions.READ,
+            resource = workspaceResource
+        )
+
+        assertFalse(decision.allowed, "Anonymous user should not be able to read private workspace")
+        assertEquals(ReasonCode.DENY_WORKSPACE_PRIVATE, decision.reason)
+    }
+
+    @Test
     fun `anonymous user cannot write workspace`() {
         val authorizer = buildAuthorizer(
             roleProvider = TestRoleContextProvider.builder().build()

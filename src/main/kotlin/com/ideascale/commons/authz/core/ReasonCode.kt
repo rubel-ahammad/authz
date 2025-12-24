@@ -37,6 +37,7 @@ value class ReasonCode(val value: String) {
 
         // Resource state
         val DENY_WORKSPACE_READONLY = ReasonCode("DENY_WORKSPACE_READONLY")
+        val DENY_WORKSPACE_PRIVATE = ReasonCode("DENY_WORKSPACE_PRIVATE")
         val DENY_RESOURCE_READONLY = ReasonCode("DENY_RESOURCE_READONLY")
         val DENY_CAMPAIGN_EXPIRED = ReasonCode("DENY_CAMPAIGN_EXPIRED")
         val DENY_IDEA_LOCKED = ReasonCode("DENY_IDEA_LOCKED")

@@ -23,7 +23,7 @@ Framework-neutral Kotlin/JVM authorization library implementing Policy-Based Acc
 ```kotlin
 data class Subject(
     val workspaceId: String,           // Tenant boundary
-    val memberId: String,              // User identifier
+    val memberId: String?,             // User identifier (null for anonymous)
     val principalType: PrincipalType,  // USER or SERVICE
     val actorMemberId: String? = null  // For admin impersonation
 )
@@ -92,7 +92,7 @@ The `PipelineAuthorizer` evaluates requests through four steps (deny-first):
 ```
 Request ──► ResourceContextStep ──► RelationshipStep ──► AttributeStep ──► RoleStep ──► Decision
                     │                      │                   │                 │
-              Tenant check           Membership check    State constraints   Role-based
+              Tenant check           Relationship facts  State constraints   Role-based
               Context resolution     Ownership facts     ABAC deny rules     allow rules
 ```
 
@@ -102,8 +102,7 @@ Request ──► ResourceContextStep ──► RelationshipStep ──► Attri
 - Applies resource-context deny rules
 
 ### Step 2: RelationshipEvaluationStep
-- Loads relationship facts (membership, ownership)
-- Verifies workspace membership
+- Loads relationship facts (ownership, group links)
 - Applies relationship-based deny rules
 
 ### Step 3: AttributeEvaluationStep
@@ -135,7 +134,6 @@ data class IdeaContext(workspaceId, communityId, campaignId, ideaId)
 
 // Step 2: Subject's relationships to the resource
 data class RelationshipContext(
-    val isWorkspaceMember: Boolean,
     val isIdeaOwner: Boolean,
     val viaGroupIds: Set<String>
 )
@@ -167,15 +165,15 @@ interface ResourceContextProvider {
 }
 
 interface RelationshipContextProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, resourceContext: ResourceContext): RelationshipContext
+    fun load(workspaceId: String, memberId: String?, resource: ResourceRef, resourceContext: ResourceContext): RelationshipContext
 }
 
 interface AttributeContextProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, resourceContext: ResourceContext, ctx: AuthzContext): AttributeContext
+    fun load(workspaceId: String, memberId: String?, resource: ResourceRef, resourceContext: ResourceContext, ctx: AuthzContext): AttributeContext
 }
 
 interface RoleContextProvider {
-    fun load(workspaceId: String, memberId: String, resource: ResourceRef, resourceContext: ResourceContext, relationshipContext: RelationshipContext): RoleContext
+    fun load(workspaceId: String, memberId: String?, resource: ResourceRef, resourceContext: ResourceContext, relationshipContext: RelationshipContext): RoleContext
 }
 ```
 

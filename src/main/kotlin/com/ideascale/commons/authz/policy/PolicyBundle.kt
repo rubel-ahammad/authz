@@ -26,6 +26,7 @@ object DefaultPolicyBundle {
 
     fun attributeRules(): List<DenyRule> = buildList {
         addAll(GlobalRules.attributeDenyRules())
+        addAll(WorkspaceRules.attributeDenyRules())
         addAll(IdeaRules.attributeDenyRules())
     }
 

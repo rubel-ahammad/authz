@@ -25,7 +25,8 @@ class TestAttributeContextProvider(
                     workspace = WorkspaceAttrs(
                         subscription = SubscriptionAttrs(SubscriptionState.ACTIVE),
                         network = NetworkAttrs(IpRestrictionResult.Allowed),
-                        emailDomain = EmailDomainAttrs()
+                        emailDomain = EmailDomainAttrs(),
+                        flags = WorkspaceFlags(isPublic = true)
                     ),
                     member = MemberAttrs(MemberStatus.MEMBER),
                     request = RequestAttrs(ip = null, channel = Channel.PUBLIC_API)
@@ -39,7 +40,23 @@ class TestAttributeContextProvider(
                     workspace = WorkspaceAttrs(
                         subscription = SubscriptionAttrs(SubscriptionState.ACTIVE),
                         network = NetworkAttrs(IpRestrictionResult.Allowed),
-                        emailDomain = EmailDomainAttrs()
+                        emailDomain = EmailDomainAttrs(),
+                        flags = WorkspaceFlags(isPublic = true)
+                    ),
+                    member = MemberAttrs(MemberStatus.MEMBER),
+                    request = RequestAttrs(ip = null, channel = Channel.PUBLIC_API)
+                )
+            )
+        }
+
+        fun privateWorkspace(): TestAttributeContextProvider {
+            return TestAttributeContextProvider(
+                AttributeContext(
+                    workspace = WorkspaceAttrs(
+                        subscription = SubscriptionAttrs(SubscriptionState.ACTIVE),
+                        network = NetworkAttrs(IpRestrictionResult.Allowed),
+                        emailDomain = EmailDomainAttrs(),
+                        flags = WorkspaceFlags(isPublic = false)
                     ),
                     member = MemberAttrs(MemberStatus.MEMBER),
                     request = RequestAttrs(ip = null, channel = Channel.PUBLIC_API)
