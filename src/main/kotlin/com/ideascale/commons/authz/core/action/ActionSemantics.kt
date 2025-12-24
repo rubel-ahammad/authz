@@ -7,6 +7,7 @@ object ActionSemantics {
     // Explicit action → group registry (single source of truth)
     private val actionGroups: Map<String, ActionGroup> = buildMap {
         // READ actions
+        put(WorkspaceActions.READ.id, ActionGroup.READ)
         put(IdeaActions.READ.id, ActionGroup.READ)
         put(IdeaActions.LIST.id, ActionGroup.READ)
         put(CampaignActions.READ.id, ActionGroup.READ)
@@ -15,6 +16,7 @@ object ActionSemantics {
         put(MemberActions.LIST.id, ActionGroup.READ)
 
         // WRITE actions
+        put(WorkspaceActions.UPDATE.id, ActionGroup.WRITE)
         put(IdeaActions.CREATE.id, ActionGroup.WRITE)
         put(IdeaActions.EDIT.id, ActionGroup.WRITE)
         put(IdeaActions.DELETE.id, ActionGroup.WRITE)

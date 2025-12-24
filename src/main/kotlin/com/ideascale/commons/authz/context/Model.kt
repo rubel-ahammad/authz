@@ -42,11 +42,13 @@ value class RoleId(val value: String) {
 
 object RoleIds {
     val WORKSPACE_ADMIN = RoleId("WORKSPACE_ADMIN")
+    val WORKSPACE_MEMBER = RoleId("WORKSPACE_MEMBER")
     val CAMPAIGN_MODERATOR = RoleId("CAMPAIGN_MODERATOR")
+    val ANONYMOUS = RoleId("ANONYMOUS")
+    val ADMIN = RoleId("ADMIN")
 }
 
 data class RelationshipContext(
-    val isWorkspaceMember: Boolean = false,
     val isIdeaOwner: Boolean = false,
     val viaGroupIds: Set<String> = emptySet()
 )

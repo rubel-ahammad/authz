@@ -10,7 +10,7 @@ fun Decision.toLogFields(
     context: AuthzContext
 ): Map<String, String> = buildMap {
     put("workspaceId", subject.workspaceId)
-    put("memberId", subject.memberId)
+    subject.memberId?.let { put("memberId", it) }
     put("principalType", subject.principalType.name)
     subject.actorMemberId?.let { put("actorMemberId", it) }
 

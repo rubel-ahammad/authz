@@ -8,7 +8,7 @@ import com.ideascale.commons.authz.context.ResourceContext
 interface AttributeContextProvider {
     fun load(
         workspaceId: String,
-        memberId: String,
+        memberId: String?,
         resource: ResourceRef,
         resourceContext: ResourceContext,
         ctx: AuthzContext

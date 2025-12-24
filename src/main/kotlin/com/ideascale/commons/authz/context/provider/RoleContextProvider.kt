@@ -8,7 +8,7 @@ import com.ideascale.commons.authz.context.RoleContext
 interface RoleContextProvider {
     fun load(
         workspaceId: String,
-        memberId: String,
+        memberId: String?,
         resource: ResourceRef,
         resourceContext: ResourceContext,
         relationshipContext: RelationshipContext

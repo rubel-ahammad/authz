@@ -2,6 +2,7 @@ package com.ideascale.commons.authz.policy
 
 import com.ideascale.commons.authz.policy.catalog.GlobalRules
 import com.ideascale.commons.authz.policy.catalog.IdeaRules
+import com.ideascale.commons.authz.policy.catalog.WorkspaceRules
 import com.ideascale.commons.authz.policy.rule.AllowRule
 import com.ideascale.commons.authz.policy.rule.DenyRule
 import com.ideascale.commons.authz.policy.rule.RuleRegistry
@@ -28,6 +29,7 @@ object DefaultPolicyBundle {
     }
 
     fun roleRules(): List<AllowRule> = buildList {
+        addAll(WorkspaceRules.roleAllowRules())
         addAll(IdeaRules.roleAllowRules())
     }
 

@@ -26,10 +26,6 @@ class RelationshipEvaluationStep(
         val relationshipContext = provider.load(subject.workspaceId, subject.memberId, resource, resourceContext)
         ctx.relationshipContext = relationshipContext
 
-        if (!relationshipContext.isWorkspaceMember) {
-            return StepResult.Stop(ctx.deny(ReasonCode.DENY_NOT_IN_SCOPE))
-        }
-
         val target = Target(resource.type, classifier.groupOf(request.action))
         for (rule in registry.deniesFor(target)) {
             val denyReason = rule.evaluate(ctx)
