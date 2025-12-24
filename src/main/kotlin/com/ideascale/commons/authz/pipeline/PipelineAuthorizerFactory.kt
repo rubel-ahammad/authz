@@ -1,4 +1,4 @@
-package com.ideascale.commons.authz
+package com.ideascale.commons.authz.pipeline
 
 import com.ideascale.commons.authz.policy.evaluator.AttributeEvaluationStep
 import com.ideascale.commons.authz.policy.evaluator.RoleEvaluationStep
@@ -12,6 +12,7 @@ import com.ideascale.commons.authz.policy.DefaultPolicyBundle
 import com.ideascale.commons.authz.policy.StageRuleRegistries
 import com.ideascale.commons.authz.policy.rule.ActionClassifier
 import com.ideascale.commons.authz.policy.rule.DefaultActionClassifier
+import com.ideascale.commons.authz.Authorizer
 
 data class PipelineDependencies(
     val resourceContextProvider: ResourceContextProvider,

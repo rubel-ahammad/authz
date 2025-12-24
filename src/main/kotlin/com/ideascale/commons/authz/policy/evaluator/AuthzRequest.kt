@@ -1,4 +1,4 @@
-package com.ideascale.commons.authz
+package com.ideascale.commons.authz.policy.evaluator
 
 import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.AuthzContext

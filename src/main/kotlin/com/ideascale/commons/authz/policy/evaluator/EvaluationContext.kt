@@ -1,4 +1,4 @@
-package com.ideascale.commons.authz
+package com.ideascale.commons.authz.policy.evaluator
 
 import com.ideascale.commons.authz.context.AttributeContext
 import com.ideascale.commons.authz.context.RelationshipContext

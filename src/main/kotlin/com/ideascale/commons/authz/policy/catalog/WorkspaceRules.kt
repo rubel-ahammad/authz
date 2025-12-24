@@ -4,7 +4,7 @@ import com.ideascale.commons.authz.action.ActionGroup
 import com.ideascale.commons.authz.decision.ReasonCode
 import com.ideascale.commons.authz.resource.ResourceType
 import com.ideascale.commons.authz.context.RoleIds
-import com.ideascale.commons.authz.EvaluationContext
+import com.ideascale.commons.authz.policy.evaluator.EvaluationContext
 import com.ideascale.commons.authz.policy.dsl.allow
 import com.ideascale.commons.authz.policy.dsl.deny
 import com.ideascale.commons.authz.policy.rule.DenyRule

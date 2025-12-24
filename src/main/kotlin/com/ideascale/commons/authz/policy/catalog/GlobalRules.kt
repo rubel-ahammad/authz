@@ -2,7 +2,7 @@ package com.ideascale.commons.authz.policy.catalog
 
 import com.ideascale.commons.authz.action.ActionGroup
 import com.ideascale.commons.authz.decision.ReasonCode
-import com.ideascale.commons.authz.EvaluationContext
+import com.ideascale.commons.authz.policy.evaluator.EvaluationContext
 import com.ideascale.commons.authz.policy.dsl.deny
 import com.ideascale.commons.authz.policy.rule.DenyRule
 

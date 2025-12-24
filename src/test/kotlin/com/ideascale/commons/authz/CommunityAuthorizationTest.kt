@@ -2,6 +2,8 @@ package com.ideascale.commons.authz
 
 import com.ideascale.commons.authz.Authorizer
 import com.ideascale.commons.authz.decision.ReasonCode
+import com.ideascale.commons.authz.pipeline.PipelineAuthorizerFactory
+import com.ideascale.commons.authz.pipeline.PipelineDependencies
 import com.ideascale.commons.authz.resource.ResourceRef
 import com.ideascale.commons.authz.resource.ResourceType
 import com.ideascale.commons.authz.action.CommunityActions

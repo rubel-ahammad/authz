@@ -1,9 +1,6 @@
 package com.ideascale.commons.authz.policy.evaluator
 
 import com.ideascale.commons.authz.decision.ReasonCode
-import com.ideascale.commons.authz.EvaluationContext
-import com.ideascale.commons.authz.EvaluationStep
-import com.ideascale.commons.authz.StepResult
 import com.ideascale.commons.authz.context.provider.RoleContextProvider
 import com.ideascale.commons.authz.policy.rule.ActionClassifier
 import com.ideascale.commons.authz.policy.rule.RuleRegistry

@@ -1,10 +1,14 @@
-package com.ideascale.commons.authz
+package com.ideascale.commons.authz.pipeline
 
 import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.AuthzContext
 import com.ideascale.commons.authz.Authorizer
 import com.ideascale.commons.authz.decision.Decision
 import com.ideascale.commons.authz.decision.ReasonCode
+import com.ideascale.commons.authz.policy.evaluator.AuthzRequest
+import com.ideascale.commons.authz.policy.evaluator.EvaluationContext
+import com.ideascale.commons.authz.policy.evaluator.EvaluationStep
+import com.ideascale.commons.authz.policy.evaluator.StepResult
 import com.ideascale.commons.authz.resource.ResourceRef
 import com.ideascale.commons.authz.Subject
 
