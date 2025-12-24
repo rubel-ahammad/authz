@@ -109,6 +109,7 @@ Request ──► ResourceContextStep ──► RelationshipStep ──► Attri
 - Loads attribute facts (subscription, member status, resource state)
 - Applies ABAC deny rules:
   - Workspace readonly mode
+  - Workspace private denies anonymous access
   - Campaign expired/readonly
   - Idea locked/archived
 
@@ -267,6 +268,7 @@ val logFields = decision.toLogFields(subject, IdeaActions.EDIT, resource, contex
 | `DENY_SUBSCRIPTION_BLOCKED` | Subscription inactive |
 | `DENY_IP_RESTRICTED` | IP not allowed |
 | `DENY_WORKSPACE_READONLY` | Workspace in readonly mode |
+| `DENY_WORKSPACE_PRIVATE` | Workspace is private for anonymous |
 | `DENY_CAMPAIGN_EXPIRED` | Campaign has expired |
 | `DENY_IDEA_LOCKED` | Idea is locked |
 | `DENY_IDEA_ARCHIVED` | Idea is archived |
@@ -282,7 +284,7 @@ val logFields = decision.toLogFields(subject, IdeaActions.EDIT, resource, contex
 ## Project Structure
 
 ```
-src/main/kotlin/com/ideascale/authz/
+src/main/kotlin/com/ideascale/commons/authz/
 ├── core/                          # Stable, transport-neutral types
 │   ├── Action.kt
 │   ├── ActionGroup.kt
@@ -302,10 +304,16 @@ src/main/kotlin/com/ideascale/authz/
 │   └── action/
 │       ├── ActionSemantics.kt     # Action → ActionGroup registry
 │       ├── CampaignActions.kt
+│       ├── CommunityActions.kt
 │       ├── IdeaActions.kt
-│       └── MemberActions.kt
+│       ├── MemberActions.kt
+│       └── WorkspaceActions.kt
 ├── context/                       # Evaluation context models
-│   ├── Model.kt                   # Resource/Relationship/Attribute/Role context types
+│   ├── AttributeContext.kt
+│   ├── RelationshipContext.kt
+│   ├── ResourceContext.kt
+│   ├── RoleContext.kt
+│   └── RoleIds.kt
 │   └── provider/
 │       ├── AttributeContextProvider.kt
 │       ├── RoleContextProvider.kt
