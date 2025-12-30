@@ -10,13 +10,13 @@ import com.ideascale.commons.authz.resource.ResourceType
  *
  * @param id Unique identifier for the policy set
  * @param resourceType Optional resource type this set applies to (null for global policies)
- * @param policies List of policies in this set
+ * @param policies Set of policies in this set
  * @param description Human-readable description
  */
 data class PolicySet(
     val id: String,
     val resourceType: ResourceType? = null,
-    val policies: List<Policy>,
+    val policies: Set<Policy>,
     val description: String? = null
 ) {
     /**
@@ -47,7 +47,7 @@ data class PolicySet(
         fun merge(id: String, vararg sets: PolicySet): PolicySet = PolicySet(
             id = id,
             resourceType = null,
-            policies = sets.flatMap { it.policies },
+            policies = sets.flatMap { it.policies }.toSet(),
             description = "Merged policy set from: ${sets.map { it.id }.joinToString(", ")}"
         )
     }

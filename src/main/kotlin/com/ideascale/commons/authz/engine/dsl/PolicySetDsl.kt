@@ -41,7 +41,7 @@ import com.ideascale.commons.authz.resource.ResourceType
 abstract class PolicySetBase(
     protected val resourceType: ResourceType? = null
 ) {
-    private val _policies = mutableListOf<Policy>()
+    private val _policies = mutableSetOf<Policy>()
 
     /**
      * Register a policy and return it.
@@ -89,7 +89,7 @@ abstract class PolicySetBase(
     /**
      * Get all registered policies.
      */
-    fun policies(): List<Policy> = _policies.toList()
+    fun policies(): Set<Policy> = _policies.toSet()
 
     /**
      * Build the PolicySet.
