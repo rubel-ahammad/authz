@@ -34,6 +34,7 @@ value class ReasonCode(val value: String) {
         // Scope/relationship
         val DENY_NOT_IN_SCOPE = ReasonCode("DENY_NOT_IN_SCOPE")
         val DENY_INSUFFICIENT_PRIVILEGE = ReasonCode("DENY_INSUFFICIENT_PRIVILEGE")
+        val DENY_RESOURCE_CONTEXT_MISMATCH = ReasonCode("DENY_RESOURCE_CONTEXT_MISMATCH")
 
         // Resource state
         val DENY_WORKSPACE_READONLY = ReasonCode("DENY_WORKSPACE_READONLY")

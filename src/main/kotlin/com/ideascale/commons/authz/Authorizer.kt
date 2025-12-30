@@ -1,7 +1,7 @@
 package com.ideascale.commons.authz
 
 import com.ideascale.commons.authz.decision.Decision
-import com.ideascale.commons.authz.resource.ResourceRef
+import com.ideascale.commons.authz.resource.Resource
 import com.ideascale.commons.authz.action.Action
 
 /**
@@ -17,14 +17,14 @@ import com.ideascale.commons.authz.action.Action
  *     relationships = RelationshipContext(...),
  *     attributes = AttributeContext(...)
  * )
- * val decision = authorizer.authorize(subject, action, resource, context)
+ * val decision = authorizer.authorize(principal, action, resource, context)
  * ```
  */
 interface Authorizer {
     fun authorize(
-        subject: Subject,
+        principal: Principal,
         action: Action,
-        resource: ResourceRef,
+        resource: Resource,
         context: AuthorizationContext = AuthorizationContext()
     ): Decision
 }

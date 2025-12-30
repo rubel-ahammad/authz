@@ -1,5 +1,6 @@
 package com.ideascale.commons.authz.engine.model
 
+import com.ideascale.commons.authz.decision.Obligation
 import com.ideascale.commons.authz.decision.ReasonCode
 
 /**
@@ -20,6 +21,7 @@ import com.ideascale.commons.authz.decision.ReasonCode
  * @param whenConditions Conditions that must ALL be true for policy to apply (implicit AND)
  * @param unlessConditions If ANY is true, policy does not apply (for FORBID policies)
  * @param reasonCode Reason code for Decision audit trail
+ * @param obligations Obligations to apply when this policy is the winner
  * @param priority Lower number = higher priority (evaluated first)
  * @param description Human-readable description for documentation
  */
@@ -30,6 +32,7 @@ data class Policy(
     val whenConditions: List<PolicyCondition> = emptyList(),
     val unlessConditions: List<PolicyCondition> = emptyList(),
     val reasonCode: ReasonCode,
+    val obligations: Set<Obligation> = emptySet(),
     val priority: Int = DEFAULT_PRIORITY,
     val description: String? = null
 ) {

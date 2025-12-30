@@ -2,13 +2,13 @@ package com.ideascale.commons.authz.engine
 
 import com.ideascale.commons.authz.Authorizer
 import com.ideascale.commons.authz.AuthorizationContext
-import com.ideascale.commons.authz.Subject
+import com.ideascale.commons.authz.Principal
 import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.decision.Decision
 import com.ideascale.commons.authz.engine.eval.PolicyEvaluator
 import com.ideascale.commons.authz.engine.eval.PolicyIndex
 import com.ideascale.commons.authz.engine.model.PolicySet
-import com.ideascale.commons.authz.resource.ResourceRef
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Authorizer implementation using the policy engine.
@@ -30,7 +30,7 @@ import com.ideascale.commons.authz.resource.ResourceRef
  * )
  *
  * // Authorize
- * val decision = authorizer.authorize(subject, action, resource, context)
+ * val decision = authorizer.authorize(principal, action, resource, context)
  * ```
  */
 class PolicyEngineAuthorizer(
@@ -48,13 +48,13 @@ class PolicyEngineAuthorizer(
     constructor(vararg policySets: PolicySet) : this(PolicyEvaluator.of(*policySets))
 
     override fun authorize(
-        subject: Subject,
+        principal: Principal,
         action: Action,
-        resource: ResourceRef,
+        resource: Resource,
         context: AuthorizationContext
     ): Decision {
         return evaluator.evaluate(
-            subject = subject,
+            principal = principal,
             action = action,
             resource = resource,
             roleContext = context.roles,

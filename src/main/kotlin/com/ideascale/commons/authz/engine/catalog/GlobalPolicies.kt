@@ -18,6 +18,38 @@ object GlobalPolicies : GlobalPolicySetBase() {
     // ========================================================================
 
     /**
+     * Cross-tenant access is always denied.
+     */
+    val tenantMismatchDenyAll: Policy = policy(
+        (forbid(
+            principal = { any() },
+            action = { any() },
+            resource = { any() }
+        ) `when` {
+            resource { tenantMismatch() }
+        }).id("global.tenant_mismatch.deny_all")
+          .reason(ReasonCode.DENY_TENANT_MISMATCH)
+          .priority(1)
+          .description("Cross-tenant access is denied")
+    )
+
+    /**
+     * Resource context must match the requested resource.
+     */
+    val resourceContextMismatchDenyAll: Policy = policy(
+        (forbid(
+            principal = { any() },
+            action = { any() },
+            resource = { any() }
+        ) `when` {
+            resource { resourceContextMismatch() }
+        }).id("global.resource_context_mismatch.deny_all")
+          .reason(ReasonCode.DENY_RESOURCE_CONTEXT_MISMATCH)
+          .priority(1)
+          .description("Resource context must match the requested resource")
+    )
+
+    /**
      * Banned members cannot perform any action.
      */
     val bannedMemberDenyAll: Policy = policy(

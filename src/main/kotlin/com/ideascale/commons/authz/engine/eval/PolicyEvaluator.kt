@@ -1,13 +1,13 @@
 package com.ideascale.commons.authz.engine.eval
 
-import com.ideascale.commons.authz.Subject
+import com.ideascale.commons.authz.Principal
 import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.context.*
 import com.ideascale.commons.authz.decision.Decision
 import com.ideascale.commons.authz.decision.Effect
 import com.ideascale.commons.authz.decision.ReasonCode
-import com.ideascale.commons.authz.resource.ResourceRef
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Result of evaluating a single policy.
@@ -47,15 +47,17 @@ class PolicyEvaluator private constructor(
      * Evaluate all policies against the request.
      */
     fun evaluate(
-        subject: Subject,
+        principal: Principal,
         action: Action,
-        resource: ResourceRef,
+        resource: Resource,
         roleContext: RoleContext? = null,
         resourceContext: ResourceContext? = null,
         relationshipContext: RelationshipContext? = null,
         attributeContext: AttributeContext? = null
     ): Decision {
         val conditionContext = ConditionContext(
+            principal = principal,
+            resource = resource,
             roleContext = roleContext,
             resourceContext = resourceContext,
             relationshipContext = relationshipContext,
@@ -66,16 +68,18 @@ class PolicyEvaluator private constructor(
         val candidatePolicies = index.getPoliciesFor(resource.type, action)
 
         val applicablePolicies = findApplicablePolicies(
-            candidatePolicies, subject, action, resource, roleContext, conditionContext
+            candidatePolicies, principal, action, resource, roleContext, conditionContext
         )
 
         // Forbid overrides permit - check forbids first
         val forbids = applicablePolicies.filter { it.effect == PolicyEffect.FORBID }
         if (forbids.isNotEmpty()) {
             val firstForbid = forbids.first()
+            val obligations = forbids.flatMap { it.obligations }.toSet()
             return Decision(
                 effect = Effect.DENY,
                 reason = firstForbid.reasonCode,
+                obligations = obligations,
                 details = mapOf(
                     "matchedPolicyId" to firstForbid.id,
                     "evaluator" to "policy_engine",
@@ -88,9 +92,11 @@ class PolicyEvaluator private constructor(
         val permits = applicablePolicies.filter { it.effect == PolicyEffect.PERMIT }
         if (permits.isNotEmpty()) {
             val firstPermit = permits.first()
+            val obligations = permits.flatMap { it.obligations }.toSet()
             return Decision(
                 effect = Effect.ALLOW,
                 reason = firstPermit.reasonCode,
+                obligations = obligations,
                 details = mapOf(
                     "matchedPolicyId" to firstPermit.id,
                     "evaluator" to "policy_engine",
@@ -115,15 +121,15 @@ class PolicyEvaluator private constructor(
      */
     fun evaluatePolicy(
         policy: Policy,
-        subject: Subject,
+        principal: Principal,
         action: Action,
-        resource: ResourceRef,
+        resource: Resource,
         roleContext: RoleContext?,
         conditionContext: ConditionContext
     ): PolicyEvalResult {
         // Check scope match
         val scopeMatches = ScopeMatcher.matches(
-            subject, action, resource, roleContext, policy.scope
+            principal, action, resource, roleContext, policy.scope
         )
 
         if (!scopeMatches) {
@@ -145,15 +151,15 @@ class PolicyEvaluator private constructor(
 
     private fun findApplicablePolicies(
         candidates: List<Policy>,
-        subject: Subject,
+        principal: Principal,
         action: Action,
-        resource: ResourceRef,
+        resource: Resource,
         roleContext: RoleContext?,
         conditionContext: ConditionContext
     ): List<Policy> {
         return candidates.mapNotNull { policy ->
             val result = evaluatePolicy(
-                policy, subject, action, resource, roleContext, conditionContext
+                policy, principal, action, resource, roleContext, conditionContext
             )
             when (result) {
                 is PolicyEvalResult.Applicable -> policy

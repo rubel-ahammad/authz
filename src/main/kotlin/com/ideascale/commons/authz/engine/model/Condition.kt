@@ -1,11 +1,15 @@
 package com.ideascale.commons.authz.engine.model
 
+import com.ideascale.commons.authz.Principal
 import com.ideascale.commons.authz.context.*
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Context available for condition evaluation.
  */
 data class ConditionContext(
+    val principal: Principal,
+    val resource: Resource,
     val roleContext: RoleContext?,
     val resourceContext: ResourceContext?,
     val relationshipContext: RelationshipContext?,
@@ -123,6 +127,30 @@ data class InGroupCondition(val groupIds: Set<String>? = null) : PolicyCondition
 }
 
 // ============================================================================
+// Resource Context Conditions
+// ============================================================================
+
+/**
+ * Checks if the request crosses tenant boundaries or lacks resource context.
+ */
+data object TenantMismatchCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val resourceWorkspaceId = ctx.resourceContext?.workspaceId ?: return true
+        return resourceWorkspaceId != ctx.principal.workspaceId
+    }
+}
+
+/**
+ * Checks if resource context doesn't match the requested resource (or is missing).
+ */
+data object ResourceContextMismatchCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val resourceCtx = ctx.resourceContext ?: return true
+        return resourceCtx.type != ctx.resource.type || resourceCtx.id != ctx.resource.id
+    }
+}
+
+// ============================================================================
 // Attribute Conditions
 // ============================================================================
 
@@ -213,6 +241,20 @@ data class WorkspacePublicCondition(val isPublic: Boolean = true) : PolicyCondit
     override fun evaluate(ctx: ConditionContext): Boolean {
         val flags = ctx.attributeContext?.workspace?.flags ?: return false
         return flags.isPublic == isPublic
+    }
+}
+
+/**
+ * Checks request IP against a fixed allow/deny list (exact match).
+ */
+data class RequestIpInCondition(
+    val ips: Set<String>,
+    val negate: Boolean = false
+) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val ip = ctx.attributeContext?.request?.ip ?: return false
+        val matches = ip in ips
+        return if (negate) !matches else matches
     }
 }
 

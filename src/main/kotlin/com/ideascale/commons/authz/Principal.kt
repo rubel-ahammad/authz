@@ -1,13 +1,13 @@
 package com.ideascale.commons.authz
 
 /**
- * Subject of authorization.
+ * Principal of authorization.
  *
  * workspaceId: your tenant id boundary
- * memberId: the effective subject (user)
+ * memberId: the effective principal (user)
  * actorMemberId: set when impersonating ("admin acting as")
  */
-data class Subject(
+data class Principal(
     val workspaceId: String,
     val memberId: String?,
     val principalType: PrincipalType = PrincipalType.USER,

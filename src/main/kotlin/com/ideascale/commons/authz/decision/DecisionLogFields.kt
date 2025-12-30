@@ -2,22 +2,22 @@ package com.ideascale.commons.authz.decision
 
 import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.AuthorizationContext
-import com.ideascale.commons.authz.Subject
-import com.ideascale.commons.authz.resource.ResourceRef
+import com.ideascale.commons.authz.Principal
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Helps services log consistent fields without committing to a logging framework.
  */
 fun Decision.toLogFields(
-    subject: Subject,
+    principal: Principal,
     action: Action,
-    resource: ResourceRef,
+    resource: Resource,
     context: AuthorizationContext
 ): Map<String, String> = buildMap {
-    put("workspaceId", subject.workspaceId)
-    subject.memberId?.let { put("memberId", it) }
-    put("principalType", subject.principalType.name)
-    subject.actorMemberId?.let { put("actorMemberId", it) }
+    put("workspaceId", principal.workspaceId)
+    principal.memberId?.let { put("memberId", it) }
+    put("principalType", principal.principalType.name)
+    principal.actorMemberId?.let { put("actorMemberId", it) }
 
     put("action", action.id)
     put("resourceType", resource.type.name)

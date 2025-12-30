@@ -41,6 +41,13 @@ class ConditionBuilder {
     }
 
     /**
+     * Add a resource-context-based condition.
+     */
+    fun resource(init: ResourceConditionBuilder.() -> Unit) {
+        conditions.add(ResourceConditionBuilder().apply(init).build())
+    }
+
+    /**
      * Add a custom condition with lambda.
      */
     fun custom(id: String, predicate: (ConditionContext) -> Boolean) {
@@ -133,6 +140,27 @@ class RelationshipConditionBuilder {
 }
 
 /**
+ * Builder for resource-context conditions.
+ */
+@CedarDslMarker
+class ResourceConditionBuilder {
+    private var condition: PolicyCondition? = null
+
+    /** Deny if resource context is missing or tenant does not match */
+    fun tenantMismatch() {
+        condition = TenantMismatchCondition
+    }
+
+    /** Deny if resource context does not match the requested resource */
+    fun resourceContextMismatch() {
+        condition = ResourceContextMismatchCondition
+    }
+
+    fun build(): PolicyCondition = condition
+        ?: throw IllegalStateException("No resource condition specified")
+}
+
+/**
  * Builder for attribute-based conditions.
  */
 @CedarDslMarker
@@ -222,6 +250,16 @@ class AttributeConditionBuilder {
     }
 
     // ========== IP Restriction ==========
+
+    /** Check if request IP is in a fixed list (exact match) */
+    fun requestIpIn(vararg ips: String) {
+        condition = RequestIpInCondition(ips.toSet())
+    }
+
+    /** Check if request IP is NOT in a fixed list (exact match) */
+    fun requestIpNotIn(vararg ips: String) {
+        condition = RequestIpInCondition(ips.toSet(), negate = true)
+    }
 
     /** Check if request is IP restricted (denied) */
     fun ipRestricted() {

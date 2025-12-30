@@ -1,6 +1,7 @@
 package com.ideascale.commons.authz.engine.dsl
 
 import com.ideascale.commons.authz.engine.model.*
+import com.ideascale.commons.authz.decision.Obligation
 import com.ideascale.commons.authz.decision.ReasonCode
 
 /**
@@ -61,6 +62,7 @@ class PolicyBuilder(private val effect: PolicyEffect) {
     private val whenConditions = mutableListOf<PolicyCondition>()
     private val unlessConditions = mutableListOf<PolicyCondition>()
     private var reasonCode: ReasonCode? = null
+    private val obligations = mutableSetOf<Obligation>()
     private var priority: Int = Policy.DEFAULT_PRIORITY
     private var description: String? = null
 
@@ -111,6 +113,20 @@ class PolicyBuilder(private val effect: PolicyEffect) {
     fun reason(code: ReasonCode): PolicyBuilder = apply { reasonCode = code }
 
     /**
+     * Add obligations to apply when this policy is the winner.
+     */
+    fun obligations(vararg values: Obligation): PolicyBuilder = apply {
+        obligations.addAll(values)
+    }
+
+    /**
+     * Add obligations to apply when this policy is the winner.
+     */
+    fun obligations(values: Set<Obligation>): PolicyBuilder = apply {
+        obligations.addAll(values)
+    }
+
+    /**
      * Set priority (lower = higher priority).
      */
     fun priority(value: Int): PolicyBuilder = apply { priority = value }
@@ -137,6 +153,7 @@ class PolicyBuilder(private val effect: PolicyEffect) {
             whenConditions = whenConditions.toList(),
             unlessConditions = unlessConditions.toList(),
             reasonCode = finalReasonCode,
+            obligations = obligations.toSet(),
             priority = priority,
             description = description
         )
