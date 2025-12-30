@@ -99,6 +99,11 @@ class ActionScopeBuilder {
         scope = ActionScope.Exact(action)
     }
 
+    /** Match any action classified as write */
+    fun write() {
+        scope = ActionScope.Write
+    }
+
     /** Match if action is in the specified group */
     fun `in`(group: HierarchicalActionGroup) {
         scope = ActionScope.InGroup(group.id)

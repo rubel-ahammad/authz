@@ -74,35 +74,13 @@ class PolicyEvaluator private constructor(
         // Forbid overrides permit - check forbids first
         val forbids = applicablePolicies.filter { it.effect == PolicyEffect.FORBID }
         if (forbids.isNotEmpty()) {
-            val firstForbid = forbids.first()
-            val obligations = forbids.flatMap { it.obligations }.toSet()
-            return Decision(
-                effect = Effect.DENY,
-                reason = firstForbid.reasonCode,
-                obligations = obligations,
-                details = mapOf(
-                    "matchedPolicyId" to firstForbid.id,
-                    "evaluator" to "policy_engine",
-                    "matchType" to "forbid"
-                )
-            )
+            return buildDecision(Effect.DENY, forbids, "forbid")
         }
 
         // Check for permit
         val permits = applicablePolicies.filter { it.effect == PolicyEffect.PERMIT }
         if (permits.isNotEmpty()) {
-            val firstPermit = permits.first()
-            val obligations = permits.flatMap { it.obligations }.toSet()
-            return Decision(
-                effect = Effect.ALLOW,
-                reason = firstPermit.reasonCode,
-                obligations = obligations,
-                details = mapOf(
-                    "matchedPolicyId" to firstPermit.id,
-                    "evaluator" to "policy_engine",
-                    "matchType" to "permit"
-                )
-            )
+            return buildDecision(Effect.ALLOW, permits, "permit")
         }
 
         // Default deny
@@ -166,6 +144,31 @@ class PolicyEvaluator private constructor(
                 is PolicyEvalResult.NotApplicable -> null
             }
         }
+    }
+
+    private fun buildDecision(
+        effect: Effect,
+        policies: List<Policy>,
+        matchType: String
+    ): Decision {
+        val ordered = policies.sortedBy { it.id }
+        val representative = ordered.first()
+        val obligations = ordered.flatMap { it.obligations }.toSet()
+        val matchedPolicyIds = ordered.map { it.id }
+        val matchedReasonCodes = ordered.map { it.reasonCode.value }.distinct()
+
+        return Decision(
+            effect = effect,
+            reason = representative.reasonCode,
+            obligations = obligations,
+            details = mapOf(
+                "matchedPolicyId" to representative.id,
+                "matchedPolicyIds" to matchedPolicyIds.joinToString(","),
+                "matchedReasonCodes" to matchedReasonCodes.joinToString(","),
+                "evaluator" to "policy_engine",
+                "matchType" to matchType
+            )
+        )
     }
 
     companion object {

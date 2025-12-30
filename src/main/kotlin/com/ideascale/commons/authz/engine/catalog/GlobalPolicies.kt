@@ -82,6 +82,60 @@ object GlobalPolicies : GlobalPolicySetBase() {
     )
 
     /**
+     * Non-active subscriptions cannot perform any action.
+     */
+    val inactiveSubscriptionDenyAll: Policy = policy(
+        (forbid(
+            principal = { any() },
+            action = { any() },
+            resource = { any() }
+        ) `when` {
+            attribute {
+                subscriptionStateNot(
+                    SubscriptionState.ACTIVE,
+                    SubscriptionState.SOFT_BLOCKED,
+                    SubscriptionState.READ_ONLY
+                )
+            }
+        }).id("global.subscription_inactive.deny_all")
+          .reason(ReasonCode.DENY_SUBSCRIPTION_INACTIVE)
+          .priority(2)
+          .description("Inactive subscription cannot perform any action (excluding soft blocked/read only)")
+    )
+
+    /**
+     * Soft-blocked subscriptions cannot perform write actions.
+     */
+    val softBlockedSubscriptionDenyWrite: Policy = policy(
+        (forbid(
+            principal = { any() },
+            action = { write() },
+            resource = { any() }
+        ) `when` {
+            attribute { subscriptionState(SubscriptionState.SOFT_BLOCKED) }
+        }).id("global.subscription_soft_blocked.deny_write")
+          .reason(ReasonCode.DENY_SUBSCRIPTION_SOFT_BLOCKED)
+          .priority(3)
+          .description("Soft-blocked subscription cannot perform write actions")
+    )
+
+    /**
+     * Read-only subscriptions cannot perform write actions.
+     */
+    val readOnlySubscriptionDenyWrite: Policy = policy(
+        (forbid(
+            principal = { any() },
+            action = { write() },
+            resource = { any() }
+        ) `when` {
+            attribute { subscriptionState(SubscriptionState.READ_ONLY) }
+        }).id("global.subscription_read_only.deny_write")
+          .reason(ReasonCode.DENY_SUBSCRIPTION_READ_ONLY)
+          .priority(4)
+          .description("Read-only subscription cannot perform write actions")
+    )
+
+    /**
      * IP restricted requests are denied.
      */
     val ipRestrictedDenyAll: Policy = policy(
@@ -104,7 +158,7 @@ object GlobalPolicies : GlobalPolicySetBase() {
     val workspaceReadOnlyDenyWrite: Policy = policy(
         (forbid(
             principal = { any() },
-            action = { any() },
+            action = { write() },
             resource = { any() }
         ) `when` {
             attribute { workspaceReadOnly() }

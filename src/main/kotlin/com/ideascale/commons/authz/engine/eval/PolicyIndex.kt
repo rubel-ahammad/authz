@@ -33,7 +33,7 @@ class PolicyIndex private constructor(
 ) {
     /**
      * Get all policies that might apply to a request.
-     * Returns policies in priority order (lower priority number = higher precedence).
+     * Policies are not ordered; evaluation does not depend on ordering.
      */
     fun getPoliciesFor(resourceType: ResourceType?, action: Action?): List<Policy> {
         val candidates = mutableListOf<Policy>()
@@ -46,8 +46,7 @@ class PolicyIndex private constructor(
             byResourceType[resourceType]?.let { candidates.addAll(it) }
         }
 
-        // Sort by priority and return
-        return candidates.sortedBy { it.priority }
+        return candidates
     }
 
     /**
@@ -67,7 +66,7 @@ class PolicyIndex private constructor(
             })
         }
 
-        return candidates.sortedBy { it.priority }
+        return candidates
     }
 
     /**
@@ -86,7 +85,7 @@ class PolicyIndex private constructor(
             })
         }
 
-        return candidates.sortedBy { it.priority }
+        return candidates
     }
 
     /**
@@ -130,7 +129,6 @@ class PolicyIndex private constructor(
         fun build(policySets: List<PolicySet>): PolicyIndex {
             val allPolicies = policySets
                 .flatMap { it.policies }
-                .sortedBy { it.priority }
 
             val byResourceType = mutableMapOf<ResourceType, MutableList<Policy>>()
             val globalPolicies = mutableListOf<Policy>()

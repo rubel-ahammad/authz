@@ -58,7 +58,7 @@ data class RequestAttrs(
 )
 
 enum class MemberStatus { BANNED, PENDING, MEMBER }
-enum class SubscriptionState { ACTIVE, BLOCKED, SOFT_BLOCKED }
+enum class SubscriptionState { ACTIVE, BLOCKED, SOFT_BLOCKED, READ_ONLY }
 enum class CampaignState { LAUNCHED, EXPIRED, READONLY }
 enum class CommunityStatus { ACTIVE, ARCHIVED }
 enum class IdeaState { ACTIVE, LOCKED, ARCHIVED }

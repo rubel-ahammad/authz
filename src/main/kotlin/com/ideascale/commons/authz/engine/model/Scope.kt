@@ -54,6 +54,9 @@ sealed interface ActionScope {
     /** Matches exact action */
     data class Exact(val action: Action) : ActionScope
 
+    /** Matches any action classified as write */
+    data object Write : ActionScope
+
     /** Matches if action is in the specified group (hierarchical) */
     data class InGroup(val groupId: String) : ActionScope
 

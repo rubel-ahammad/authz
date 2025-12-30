@@ -1,6 +1,7 @@
 package com.ideascale.commons.authz.engine.catalog
 
 import com.ideascale.commons.authz.action.ActionGroupRegistry
+import com.ideascale.commons.authz.action.ActionMetadataRegistry
 import com.ideascale.commons.authz.action.HierarchicalActionGroup
 
 /**
@@ -57,5 +58,16 @@ object IdeaActionsHierarchy : HierarchicalActionGroup("idea") {
         ActionGroupRegistry.register(writeActions)
         ActionGroupRegistry.register(moderateActions)
         ActionGroupRegistry.register(Moderate)
+
+        // Register action metadata
+        ActionMetadataRegistry.register(view) { read() }
+        ActionMetadataRegistry.register(list) { read() }
+        ActionMetadataRegistry.register(create) { write() }
+        ActionMetadataRegistry.register(edit) { write() }
+        ActionMetadataRegistry.register(delete) { write() }
+        ActionMetadataRegistry.register(Moderate.hide) { write() }
+        ActionMetadataRegistry.register(Moderate.unhide) { write() }
+        ActionMetadataRegistry.register(Moderate.lock) { write() }
+        ActionMetadataRegistry.register(Moderate.unlock) { write() }
     }
 }

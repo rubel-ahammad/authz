@@ -13,6 +13,7 @@ object ActionMatcher {
     fun matches(action: Action, scope: ActionScope): Boolean = when (scope) {
         is ActionScope.Any -> true
         is ActionScope.Exact -> action == scope.action
+        is ActionScope.Write -> ActionMetadataRegistry.isWrite(action.id)
         is ActionScope.InGroup -> matchesGroup(action, scope.groupId)
         is ActionScope.OneOf -> scope.actions.any { it == action }
     }

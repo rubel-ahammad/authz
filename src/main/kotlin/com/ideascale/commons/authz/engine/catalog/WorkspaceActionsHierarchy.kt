@@ -1,6 +1,7 @@
 package com.ideascale.commons.authz.engine.catalog
 
 import com.ideascale.commons.authz.action.ActionGroupRegistry
+import com.ideascale.commons.authz.action.ActionMetadataRegistry
 import com.ideascale.commons.authz.action.HierarchicalActionGroup
 
 /**
@@ -25,5 +26,8 @@ object WorkspaceActionsHierarchy : HierarchicalActionGroup("workspace") {
         ActionGroupRegistry.register(this)
         ActionGroupRegistry.register(readActions)
         ActionGroupRegistry.register(writeActions)
+
+        ActionMetadataRegistry.register(read) { read() }
+        ActionMetadataRegistry.register(update) { write() }
     }
 }
