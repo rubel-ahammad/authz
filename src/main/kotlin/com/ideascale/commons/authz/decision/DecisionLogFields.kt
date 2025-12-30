@@ -1,7 +1,7 @@
 package com.ideascale.commons.authz.decision
 
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.AuthzContext
+import com.ideascale.commons.authz.AuthorizationContext
 import com.ideascale.commons.authz.Subject
 import com.ideascale.commons.authz.resource.ResourceRef
 
@@ -12,7 +12,7 @@ fun Decision.toLogFields(
     subject: Subject,
     action: Action,
     resource: ResourceRef,
-    context: AuthzContext
+    context: AuthorizationContext
 ): Map<String, String> = buildMap {
     put("workspaceId", subject.workspaceId)
     subject.memberId?.let { put("memberId", it) }

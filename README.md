@@ -1,6 +1,6 @@
 # authz
 
-Framework-neutral Kotlin/JVM authorization library implementing Policy-Based Access Control (PBAC) with Relationship-Based Access Control (ReBAC) patterns.
+Framework-neutral Kotlin/JVM authorization library implementing a Cedar-inspired Policy-Based Access Control (PBAC) with support for Relationship-Based Access Control (ReBAC) patterns.
 
 ## Architecture
 
@@ -8,12 +8,12 @@ Framework-neutral Kotlin/JVM authorization library implementing Policy-Based Acc
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Core Module                              │
 │  Subject, Action, ResourceRef, Decision, ReasonCode, Obligation │
-│  ActionGroup, ResourceHierarchy, Authorizer interface            │
 └─────────────────────────────────────────────────────────────────┘
                               │
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Engine Module                             │
-│  PipelineAuthorizer, EvaluationSteps, Rules, Providers          │
+│                     Policy Engine Module                         │
+│  PolicyEngineAuthorizer, PolicyEvaluator, PolicyIndex           │
+│  Cedar-style DSL: permit(), forbid(), when, unless              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -32,15 +32,20 @@ data class Subject(
 ### Action
 ```kotlin
 @JvmInline
-value class Action(val id: String)  // e.g., "idea.edit", "campaign.launch"
+value class Action(val id: String) : ActionItem  // e.g., "idea.edit", "idea.moderate.lock"
 ```
 
-Actions are classified into groups via explicit registry:
-- `READ` - Query operations
-- `WRITE` - Create, edit, update, delete
-- `MODERATE` - Hide, unhide, lock, unlock
-- `ADMIN` - Ban, unban, invite, launch, close, archive
-- `UNKNOWN` - Unregistered actions (denied by default)
+Actions are organized hierarchically using `HierarchicalActionGroup`:
+```kotlin
+object IdeaActionsHierarchy : HierarchicalActionGroup("idea") {
+    val view = action("idea.view")
+    val edit = action("idea.edit")
+    val delete = action("idea.delete")
+
+    val readActions = group("idea.read", view, list)
+    val writeActions = group("idea.write", create, edit, delete)
+}
+```
 
 ### Resource
 ```kotlin
@@ -61,214 +66,212 @@ data class Decision(
 )
 ```
 
-## Resource Hierarchy
+## Policy DSL
 
-Declared in `ResourceHierarchy`:
+The library uses a Cedar-inspired DSL for defining authorization policies.
 
+### Policy Structure
 ```
-WORKSPACE (root)
-├── COMMUNITY
-│   └── CAMPAIGN
-│       └── IDEA
-├── MEMBER
-├── GROUP
-└── SUBSCRIPTION
-
-Cross-cutting: TRANSLATION, MODERATION_CASE
+permit|forbid (
+    principal = { ... },
+    action = { ... },
+    resource = { ... }
+) when { ... } unless { ... }
 ```
 
-Query utilities:
+### Permit Policies
+
+**Role-based (Membership) Permission:**
 ```kotlin
-ResourceHierarchy.parentOf(ResourceType.IDEA)      // CAMPAIGN
-ResourceHierarchy.ancestorsOf(ResourceType.IDEA)   // [CAMPAIGN, COMMUNITY, WORKSPACE]
-ResourceHierarchy.isDescendantOf(IDEA, WORKSPACE)  // true
-ResourceHierarchy.childrenOf(WORKSPACE)            // [COMMUNITY, MEMBER, GROUP, SUBSCRIPTION]
+permit(
+    principal = { hasRole(RoleIds.WORKSPACE_ADMIN, at = RoleLevel.WORKSPACE) },
+    action = { `in`(IdeaActionsHierarchy) },
+    resource = { any() }
+).id("idea.admin.full_access")
+ .reason(ReasonCode.ALLOW_ROLE)
 ```
 
-## Authorization Pipeline
-
-The `PipelineAuthorizer` evaluates requests through four steps (deny-first):
-
+**Relationship-based Permission (Ownership):**
+```kotlin
+(permit(
+    principal = { authenticated() },
+    action = { eq(IdeaActionsHierarchy.edit) },
+    resource = { any() }
+) `when` {
+    relationship { isIdeaOwner() }
+}).id("idea.owner.edit")
+  .reason(ReasonCode.ALLOW_OWNER)
 ```
-Request ──► ResourceContextStep ──► RelationshipStep ──► AttributeStep ──► RoleStep ──► Decision
-                    │                      │                   │                 │
-              Tenant check           Relationship facts  State constraints   Role-based
-              Context resolution     Ownership facts     ABAC deny rules     allow rules
+
+**Relationship-based Permission (Group):**
+```kotlin
+(permit(
+    principal = { authenticated() },
+    action = { `in`(IdeaActionsHierarchy.readActions) },
+    resource = { any() }
+) `when` {
+    relationship { inAnyGroup() }
+}).id("idea.group.view")
+  .reason(ReasonCode.ALLOW_RELATIONSHIP)
 ```
 
-### Step 1: ResourceEvaluationStep
-- Loads resource context facts (hierarchy context)
-- Enforces tenant isolation (`workspaceId` match)
-- Applies resource-context deny rules
+### Forbid Policies
 
-### Step 2: RelationshipEvaluationStep
-- Loads relationship facts (ownership, group links)
-- Applies relationship-based deny rules
+**Attribute-based Deny:**
+```kotlin
+(forbid(
+    principal = { any() },
+    action = { `in`(IdeaActionsHierarchy.writeActions) },
+    resource = { any() }
+) `when` {
+    attribute { ideaState(IdeaState.LOCKED) }
+}).id("idea.locked.deny_write")
+  .reason(ReasonCode.DENY_IDEA_LOCKED)
+```
 
-### Step 3: AttributeEvaluationStep
-- Loads attribute facts (subscription, member status, resource state)
-- Applies ABAC deny rules:
-  - Workspace readonly mode
-  - Workspace private denies anonymous access
-  - Campaign expired/readonly
-  - Idea locked/archived
+**With Exception (unless):**
+```kotlin
+(forbid(
+    principal = { any() },
+    action = { `in`(IdeaActionsHierarchy.writeActions) },
+    resource = { any() }
+) `when` {
+    attribute { ideaState(IdeaState.LOCKED) }
+} unless {
+    role { hasRole(RoleIds.CAMPAIGN_MODERATOR, at = RoleLevel.CAMPAIGN) }
+}).id("idea.locked.deny_write")
+  .reason(ReasonCode.DENY_IDEA_LOCKED)
+```
 
-### Step 4: RoleEvaluationStep
-- Loads role facts (workspace/community/campaign/group roles)
-- Applies allow rules:
-  - Owner can write their resources
-  - Campaign moderator can moderate
-  - Workspace admin has full access
+## Evaluation Semantics
 
-**Fallback**: `DENY_DEFAULT` if no step allows.
+Following Cedar's evaluation model:
 
-## Facts Model
+1. **Find applicable policies** - Match request against policy scopes
+2. **Evaluate conditions** - Check `when` and `unless` clauses
+3. **Forbid overrides permit** - If ANY forbid policy matches → DENY
+4. **Permit if matched** - If ANY permit policy matches → ALLOW
+5. **Default deny** - No matching policy → DENY
 
-The pipeline collects four types of facts:
+## Policy Organization
+
+Policies are organized by resource type using `PolicySetBase`:
 
 ```kotlin
-// Step 1: Resource context in the hierarchy
-sealed interface ResourceContext {
-    val workspaceId: String
+object IdeaPolicies : PolicySetBase(ResourceType.IDEA) {
+    val adminFullAccess: Policy = policy(
+        permit(
+            principal = { hasRole(RoleIds.WORKSPACE_ADMIN, at = RoleLevel.WORKSPACE) },
+            action = { `in`(IdeaActionsHierarchy) },
+            resource = { any() }
+        ).id("idea.admin.full_access")
+         .reason(ReasonCode.ALLOW_ROLE)
+    )
+
+    // ... more policies
 }
-data class IdeaContext(workspaceId, communityId, campaignId, ideaId)
+```
 
-// Step 2: Subject's relationships to the resource
-data class RelationshipContext(
-    val isIdeaOwner: Boolean,
-    val viaGroupIds: Set<String>
+## Policy Index
+
+For efficient evaluation, policies are indexed at startup:
+
+```kotlin
+// Build index once at startup
+val index = PolicyIndex.build(
+    IdeaPolicies.toSet(),
+    GlobalPolicies.toSet()
 )
 
-// Step 3: State and configuration attributes
-data class AttributeContext(
-    val workspace: WorkspaceAttrs,
-    val member: MemberAttrs,
-    val campaign: CampaignAttrs?,
-    val idea: IdeaAttrs?
-)
-
-// Step 4: Role assignments
-data class RoleContext(
-    val workspaceRoles: Set<RoleId>,
-    val communityRoles: Set<RoleId>,
-    val campaignRoles: Set<RoleId>,
-    val groupRoles: Set<RoleId>
-)
+// Create authorizer with pre-built index
+val authorizer = PolicyEngineAuthorizer(index)
 ```
 
-## Providers (Data Loading Interfaces)
-
-Implement these to integrate with your data layer:
-
-```kotlin
-interface ResourceContextProvider {
-    fun load(resource: ResourceRef): ResourceContext
-}
-
-interface RelationshipContextProvider {
-    fun load(workspaceId: String, memberId: String?, resource: ResourceRef, resourceContext: ResourceContext): RelationshipContext
-}
-
-interface AttributeContextProvider {
-    fun load(workspaceId: String, memberId: String?, resource: ResourceRef, resourceContext: ResourceContext, ctx: AuthzContext): AttributeContext
-}
-
-interface RoleContextProvider {
-    fun load(workspaceId: String, memberId: String?, resource: ResourceRef, resourceContext: ResourceContext, relationshipContext: RelationshipContext): RoleContext
-}
-```
-
-## Rules System
-
-Rules are indexed by `Target` (ResourceType + ActionGroup):
-
-```kotlin
-// Deny rule example
-deny {
-    id("idea.state.deny_write")
-    target(ResourceType.IDEA, ActionGroup.WRITE)
-    condition { ctx ->
-        when (ctx.attributeContext?.idea?.state) {
-            IdeaState.LOCKED -> ReasonCode.DENY_IDEA_LOCKED
-            IdeaState.ARCHIVED -> ReasonCode.DENY_IDEA_ARCHIVED
-            else -> null
-        }
-    }
-}
-
-// Allow rule example
-allow {
-    id("idea.write.allow_owner")
-    target(ResourceType.IDEA, ActionGroup.WRITE)
-    condition { ctx ->
-        if (ctx.relationshipContext?.isIdeaOwner == true) {
-            ctx.allow(ReasonCode.ALLOW_OWNER)
-        } else null
-    }
-}
-```
-
-## Action Registry
-
-Actions are explicitly registered in `ActionSemantics`:
-
-```kotlin
-ActionSemantics.groupOf(IdeaActions.EDIT)           // WRITE
-ActionSemantics.groupOf(IdeaActions.Moderate.HIDE)  // MODERATE
-ActionSemantics.groupOf(MemberActions.BAN)          // ADMIN
-ActionSemantics.groupOf(Action("typo.action"))      // UNKNOWN (denied)
-```
+The index provides O(1) lookup by resource type instead of scanning all policies.
 
 ## Usage Example
 
 ```kotlin
-// 1. Implement providers
-val resourceContextProvider: ResourceContextProvider = MyResourceContextProvider()
-val relationshipContextProvider: RelationshipContextProvider = MyRelationshipContextProvider()
-val attributeContextProvider: AttributeContextProvider = MyAttributeContextProvider()
-val roleContextProvider: RoleContextProvider = MyRoleContextProvider()
-
-// 2. Build authorizer
-val deps = PipelineDependencies(
-    resourceContextProvider = resourceContextProvider,
-    relationshipContextProvider = relationshipContextProvider,
-    attributeContextProvider = attributeContextProvider,
-    roleContextProvider = roleContextProvider
+// 1. Build policy index at startup
+val index = PolicyIndex.build(
+    IdeaPolicies.toSet(),
+    GlobalPolicies.toSet()
 )
-val authorizer = PipelineAuthorizerFactory.build(deps)
 
-// 3. Authorize requests
+// 2. Create authorizer (stateless, no I/O)
+val authorizer = PolicyEngineAuthorizer(index)
+
+// 3. Build context with whatever data you have
+val context = AuthorizationContext(
+    requestId = "req-1",
+    roles = RoleContext(
+        workspaceRoles = setOf(RoleId("member")),
+        communityRoles = emptySet(),
+        campaignRoles = emptySet(),
+        groupRoles = emptySet()
+    ),
+    relationships = RelationshipContext(
+        isIdeaOwner = true,
+        viaGroupIds = emptySet()
+    ),
+    attributes = AttributeContext(
+        workspace = WorkspaceAttrs(...),
+        member = MemberAttrs(...),
+        campaign = CampaignAttrs(...),
+        idea = IdeaAttrs(state = IdeaState.ACTIVE)
+    )
+)
+
+// 4. Authorize
 val subject = Subject(workspaceId = "w1", memberId = "m42")
 val resource = ResourceRef(ResourceType.IDEA, id = "idea-123")
-val context = AuthzContext(requestId = "req-1", ip = "10.0.0.1", channel = Channel.PUBLIC_API)
 
-val decision = authorizer.authorize(subject, IdeaActions.EDIT, resource, context)
+val decision = authorizer.authorize(
+    subject = subject,
+    action = IdeaActionsHierarchy.edit,
+    resource = resource,
+    context = context
+)
 
 if (decision.allowed) {
     // Proceed with action
 } else {
     // Handle denial: decision.reason, decision.details
 }
-
-// Structured logging
-val logFields = decision.toLogFields(subject, IdeaActions.EDIT, resource, context)
 ```
+
+## Flexible Context Building
+
+All context fields are optional. Pass only what's needed:
+
+```kotlin
+// Minimal context (only roles)
+val context = AuthorizationContext(
+    roles = RoleContext(workspaceRoles = setOf(RoleId("admin")), ...)
+)
+
+// Using builder pattern
+val context = AuthorizationContext.builder()
+    .requestId("req-123")
+    .roles(roleContext)
+    .relationships(relationshipContext)
+    .build()
+```
+
+Policies gracefully handle missing context - conditions that need unavailable context evaluate to `false`.
 
 ## Reason Codes
 
 ### Deny Codes
 | Code | Meaning |
 |------|---------|
-| `DENY_DEFAULT` | No allow rule matched |
+| `DENY_DEFAULT` | No permit policy matched |
 | `DENY_NOT_AUTHENTICATED` | Missing authentication |
 | `DENY_TENANT_MISMATCH` | Cross-tenant access attempt |
 | `DENY_BANNED` | Member is banned |
 | `DENY_PENDING` | Member is pending approval |
 | `DENY_NOT_IN_SCOPE` | Not a workspace member |
-| `DENY_SUBSCRIPTION_BLOCKED` | Subscription inactive |
-| `DENY_IP_RESTRICTED` | IP not allowed |
 | `DENY_WORKSPACE_READONLY` | Workspace in readonly mode |
-| `DENY_WORKSPACE_PRIVATE` | Workspace is private for anonymous |
 | `DENY_CAMPAIGN_EXPIRED` | Campaign has expired |
 | `DENY_IDEA_LOCKED` | Idea is locked |
 | `DENY_IDEA_ARCHIVED` | Idea is archived |
@@ -285,69 +288,57 @@ val logFields = decision.toLogFields(subject, IdeaActions.EDIT, resource, contex
 
 ```
 src/main/kotlin/com/ideascale/commons/authz/
-├── AuthzContext.kt
-├── Authorizer.kt
-├── Channel.kt
-├── PrincipalType.kt
-├── Subject.kt
-├── Assembly.kt                   # Factory and DI
-├── AuthzRequest.kt
-├── EvaluationContext.kt
-├── EvaluationStep.kt             # EvaluationStep interface, StepResult
-├── PipelineAuthorizer.kt
+├── Authorizer.kt                    # Authorizer interface
+├── AuthorizationContext.kt          # Context for authorization (roles, relationships, etc.)
+├── Subject.kt                       # Principal/subject model
 ├── action/
-│   ├── Action.kt
-│   ├── ActionGroup.kt
-│   ├── ActionSemantics.kt        # Action → ActionGroup registry
-│   ├── CampaignActions.kt
-│   ├── CommunityActions.kt
-│   ├── IdeaActions.kt
-│   ├── MemberActions.kt
-│   └── WorkspaceActions.kt
+│   ├── Action.kt                    # Action value class
+│   ├── ActionHierarchy.kt           # HierarchicalActionGroup
+│   └── ActionMatcher.kt             # Action matching utilities
+├── context/
+│   ├── AttributeContext.kt          # Attribute facts (workspace, member, campaign, idea state)
+│   ├── RelationshipContext.kt       # Relationship facts (ownership, groups)
+│   ├── ResourceContext.kt           # Resource hierarchy context
+│   └── RoleContext.kt               # Role assignments
 ├── decision/
-│   ├── Decision.kt
-│   ├── DecisionLogFields.kt
-│   ├── Effect.kt
-│   ├── Obligation.kt
-│   └── ReasonCode.kt
-├── resource/
-│   ├── ResourceHierarchy.kt      # Declarative resource hierarchy
-│   ├── ResourceRef.kt
-│   └── ResourceType.kt
-├── context/                       # Evaluation context models
-│   ├── AttributeContext.kt
-│   ├── RelationshipContext.kt
-│   ├── ResourceContext.kt
-│   ├── RoleContext.kt
-│   ├── RoleIds.kt
-│   └── provider/
-│       ├── AttributeContextProvider.kt
-│       ├── RoleContextProvider.kt
-│       ├── RelationshipContextProvider.kt
-│       └── ResourceContextProvider.kt
-└── policy/                        # Rule DSL and default policies
-    ├── PolicyBundle.kt
-    ├── catalog/
-    │   ├── CommunityRules.kt
-    │   ├── GlobalRules.kt
-    │   ├── IdeaRules.kt
-    │   └── WorkspaceRules.kt
-    ├── dsl/
-    │   └── RuleDsl.kt
-    ├── evaluator/
-    │   ├── AttributeEvaluationStep.kt
-    │   ├── RoleEvaluationStep.kt
-    │   ├── RelationshipEvaluationStep.kt
-    │   └── ResourceEvaluationStep.kt
-    └── rule/
-        └── Rules.kt               # Rule types and registry
+│   ├── Decision.kt                  # Authorization decision
+│   ├── Effect.kt                    # ALLOW/DENY
+│   ├── Obligation.kt                # Post-decision requirements
+│   └── ReasonCode.kt                # Audit codes
+├── engine/
+│   ├── PolicyEngineAuthorizer.kt    # Main authorizer (stateless, no I/O)
+│   ├── catalog/
+│   │   ├── GlobalPolicies.kt        # Global deny policies
+│   │   ├── IdeaActionsHierarchy.kt  # Idea action definitions
+│   │   └── IdeaPolicies.kt          # Idea policies
+│   ├── dsl/
+│   │   ├── ConditionBuilders.kt     # when/unless condition DSL
+│   │   ├── PolicyDsl.kt             # permit()/forbid() DSL
+│   │   ├── PolicySetDsl.kt          # PolicySetBase
+│   │   └── ScopeBuilders.kt         # Principal/Action/Resource scope DSL
+│   ├── eval/
+│   │   ├── PolicyEvaluator.kt       # Policy evaluation engine
+│   │   ├── PolicyIndex.kt           # Efficient policy lookup
+│   │   └── ScopeMatcher.kt          # Scope matching logic
+│   └── model/
+│       ├── Condition.kt             # Policy conditions
+│       ├── Policy.kt                # Policy model
+│       ├── PolicyEffect.kt          # PERMIT/FORBID
+│       ├── PolicySet.kt             # Policy container
+│       └── Scope.kt                 # Principal/Action/Resource scopes
+└── resource/
+    ├── ResourceRef.kt               # Resource reference
+    └── ResourceType.kt              # Resource type enum
 ```
 
 ## Design Principles
 
-1. **Deny-by-default**: Pipeline returns `DENY_DEFAULT` if no allow rule matches
-2. **Tenant isolation**: Every request is bound to a `workspaceId`
-3. **Framework-neutral**: Core module has zero web/framework dependencies
-4. **Explicit action registry**: Unknown actions are denied (typo protection)
-5. **Stable contracts**: `ReasonCode` and `ResourceType` are versioned for backward compatibility
-6. **Audit-ready**: Every decision has a unique `decisionId` and structured log fields
+1. **Cedar-inspired semantics**: Forbid overrides permit, default deny
+2. **Declarative policies**: Policies defined in code using type-safe DSL
+3. **Efficient evaluation**: Index-based policy lookup for O(1) access
+4. **Stateless & no I/O**: Pure evaluation, caller provides all context
+5. **Microservice ready**: Can be extracted to separate auth service
+6. **Tenant isolation**: Every request is bound to a `workspaceId`
+7. **Framework-neutral**: Zero web/framework dependencies in core
+8. **Audit-ready**: Every decision has a unique `decisionId` and structured log fields
+9. **Hierarchical actions**: Support for `action in ActionGroup` matching
