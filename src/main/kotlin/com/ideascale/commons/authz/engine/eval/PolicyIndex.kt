@@ -18,10 +18,10 @@ import com.ideascale.commons.authz.resource.ResourceType
  * Usage:
  * ```kotlin
  * // Eager initialization at startup
- * val index = PolicyIndex.build(IdeaPolicies.toSet(), GlobalPolicies.toSet())
+ * val index = PolicyIndex.build(WorkspacePolicies.toSet(), GlobalPolicies.toSet())
  *
  * // Or lazy initialization
- * val index = PolicyIndex.lazy(IdeaPolicies.toSet(), GlobalPolicies.toSet())
+ * val index = PolicyIndex.lazy(WorkspacePolicies.toSet(), GlobalPolicies.toSet())
  * ```
  */
 class PolicyIndex private constructor(

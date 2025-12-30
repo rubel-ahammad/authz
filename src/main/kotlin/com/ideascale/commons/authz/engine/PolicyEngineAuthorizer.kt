@@ -19,7 +19,7 @@ import com.ideascale.commons.authz.resource.Resource
  * Usage:
  * ```kotlin
  * // Build at startup
- * val index = PolicyIndex.build(IdeaPolicies.toSet(), GlobalPolicies.toSet())
+ * val index = PolicyIndex.build(WorkspacePolicies.toSet(), GlobalPolicies.toSet())
  * val authorizer = PolicyEngineAuthorizer(index)
  *
  * // Caller builds context with whatever data they have

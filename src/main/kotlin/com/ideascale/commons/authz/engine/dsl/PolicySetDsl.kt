@@ -10,12 +10,12 @@ import com.ideascale.commons.authz.resource.ResourceType
  *
  * Usage:
  * ```kotlin
- * object IdeaPolicies : PolicySetBase(ResourceType.IDEA) {
+ * object WorkspacePolicies : PolicySetBase(ResourceType.WORKSPACE) {
  *
  *     val adminFullAccess = policy(
  *         permit(
  *             principal = { hasRole(RoleIds.WORKSPACE_ADMIN) },
- *             action = { `in`(IdeaActions) },
+ *             action = { `in`(WorkspaceActionsHierarchy) },
  *             resource = { any() }
  *         )
  *         .id("idea.admin.full_access")
@@ -25,7 +25,7 @@ import com.ideascale.commons.authz.resource.ResourceType
  *     val ownerCanEdit = policy(
  *         permit(
  *             principal = { authenticated() },
- *             action = { eq(IdeaActions.EDIT) },
+ *             action = { eq(WorkspaceActionsHierarchy.update) },
  *             resource = { any() }
  *         ) `when` {
  *             relationship { isOwner() }

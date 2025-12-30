@@ -4,8 +4,9 @@ import com.ideascale.commons.authz.context.*
 import com.ideascale.commons.authz.decision.ReasonCode
 import com.ideascale.commons.authz.engine.PolicyEngineAuthorizer
 import com.ideascale.commons.authz.engine.catalog.GlobalPolicies
-import com.ideascale.commons.authz.engine.catalog.IdeaActionsHierarchy
-import com.ideascale.commons.authz.engine.catalog.IdeaPolicies
+import com.ideascale.commons.authz.engine.catalog.WorkspaceActionsHierarchy
+import com.ideascale.commons.authz.engine.dsl.PolicySetBase
+import com.ideascale.commons.authz.engine.model.Policy
 import com.ideascale.commons.authz.resource.Resource
 import com.ideascale.commons.authz.resource.ResourceType
 import kotlin.test.Test
@@ -13,16 +14,24 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+private object TestWorkspacePolicies : PolicySetBase(ResourceType.WORKSPACE) {
+    val allowAll: Policy = policy(
+        permit(
+            principal = { any() },
+            action = { any() },
+            resource = { ofType(ResourceType.WORKSPACE) }
+        ).id("test.workspace.allow_all")
+         .reason(ReasonCode.ALLOW_SYSTEM)
+    )
+}
+
 class SubscriptionPoliciesTest {
 
     private val workspaceId = "w-1"
-    private val communityId = "c-1"
-    private val campaignId = "ca-1"
-    private val ideaId = "i-1"
 
     private val authorizer = PolicyEngineAuthorizer(
         GlobalPolicies.toSet(),
-        IdeaPolicies.toSet()
+        TestWorkspacePolicies.toSet()
     )
 
     private fun principal(): Principal = Principal(
@@ -31,14 +40,13 @@ class SubscriptionPoliciesTest {
     )
 
     private fun resource(): Resource = Resource(
-        type = ResourceType.IDEA,
-        id = ideaId
+        type = ResourceType.WORKSPACE,
+        id = workspaceId
     )
 
     private fun context(state: SubscriptionState): AuthorizationContext =
         AuthorizationContext(
-            roles = RoleContext(workspaceRoles = setOf(RoleIds.WORKSPACE_ADMIN)),
-            resource = IdeaContext(workspaceId, communityId, campaignId, ideaId),
+            resource = WorkspaceContext(workspaceId),
             attributes = AttributeContext(
                 workspace = WorkspaceAttrs(
                     subscription = SubscriptionAttrs(state),
@@ -47,9 +55,7 @@ class SubscriptionPoliciesTest {
                     flags = WorkspaceFlags(isPublic = true, isReadOnlyMode = false)
                 ),
                 member = MemberAttrs(MemberStatus.MEMBER),
-                request = RequestAttrs(ip = "203.0.113.1", channel = Channel.PUBLIC_API),
-                campaign = CampaignAttrs(state = CampaignState.LAUNCHED),
-                idea = IdeaAttrs(state = IdeaState.ACTIVE)
+                request = RequestAttrs(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
             )
         )
 
@@ -57,7 +63,7 @@ class SubscriptionPoliciesTest {
     fun `active subscription allows read and write`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.view,
+            WorkspaceActionsHierarchy.read,
             resource(),
             context(SubscriptionState.ACTIVE)
         )
@@ -65,7 +71,7 @@ class SubscriptionPoliciesTest {
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.edit,
+            WorkspaceActionsHierarchy.update,
             resource(),
             context(SubscriptionState.ACTIVE)
         )
@@ -76,7 +82,7 @@ class SubscriptionPoliciesTest {
     fun `blocked subscription denies read and write`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.view,
+            WorkspaceActionsHierarchy.read,
             resource(),
             context(SubscriptionState.BLOCKED)
         )
@@ -85,7 +91,7 @@ class SubscriptionPoliciesTest {
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.edit,
+            WorkspaceActionsHierarchy.update,
             resource(),
             context(SubscriptionState.BLOCKED)
         )
@@ -97,7 +103,7 @@ class SubscriptionPoliciesTest {
     fun `soft blocked subscription denies write but allows read`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.view,
+            WorkspaceActionsHierarchy.read,
             resource(),
             context(SubscriptionState.SOFT_BLOCKED)
         )
@@ -105,7 +111,7 @@ class SubscriptionPoliciesTest {
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.edit,
+            WorkspaceActionsHierarchy.update,
             resource(),
             context(SubscriptionState.SOFT_BLOCKED)
         )
@@ -117,7 +123,7 @@ class SubscriptionPoliciesTest {
     fun `read only subscription denies write but allows read`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.view,
+            WorkspaceActionsHierarchy.read,
             resource(),
             context(SubscriptionState.READ_ONLY)
         )
@@ -125,7 +131,7 @@ class SubscriptionPoliciesTest {
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            IdeaActionsHierarchy.edit,
+            WorkspaceActionsHierarchy.update,
             resource(),
             context(SubscriptionState.READ_ONLY)
         )
