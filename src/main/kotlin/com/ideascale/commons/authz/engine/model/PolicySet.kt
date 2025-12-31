@@ -1,6 +1,6 @@
 package com.ideascale.commons.authz.engine.model
 
-import com.ideascale.commons.authz.resource.ResourceType
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * A collection of policies, typically grouped by resource type.
@@ -9,13 +9,13 @@ import com.ideascale.commons.authz.resource.ResourceType
  * authorization policy catalog.
  *
  * @param id Unique identifier for the policy set
- * @param resourceType Optional resource type this set applies to (null for global policies)
+ * @param resource Optional resource this set applies to (null for global policies)
  * @param policies Set of policies in this set
  * @param description Human-readable description
  */
 data class PolicySet(
     val id: String,
-    val resourceType: ResourceType? = null,
+    val resource: Resource? = null,
     val policies: Set<Policy>,
     val description: String? = null
 ) {
@@ -46,7 +46,7 @@ data class PolicySet(
          */
         fun merge(id: String, vararg sets: PolicySet): PolicySet = PolicySet(
             id = id,
-            resourceType = null,
+            resource = null,
             policies = sets.flatMap { it.policies }.toSet(),
             description = "Merged policy set from: ${sets.map { it.id }.joinToString(", ")}"
         )

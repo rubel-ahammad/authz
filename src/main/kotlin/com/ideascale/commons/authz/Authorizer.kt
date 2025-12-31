@@ -1,8 +1,8 @@
 package com.ideascale.commons.authz
 
+import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.decision.Decision
 import com.ideascale.commons.authz.resource.Resource
-import com.ideascale.commons.authz.action.Action
 
 /**
  * Transport-neutral authorization interface.

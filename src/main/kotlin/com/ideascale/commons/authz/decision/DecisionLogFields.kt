@@ -1,8 +1,8 @@
 package com.ideascale.commons.authz.decision
 
-import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.AuthorizationContext
 import com.ideascale.commons.authz.Principal
+import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.resource.Resource
 
 /**
@@ -19,9 +19,9 @@ fun Decision.toLogFields(
     put("principalType", principal.principalType.name)
     principal.actorMemberId?.let { put("actorMemberId", it) }
 
-    put("action", action.id)
-    put("resourceType", resource.type.name)
-    put("resourceId", resource.id)
+    put("action", action.name)
+    put("resourceType", resource.name)
+    context.resource?.id?.let { put("resourceId", it) }
 
     put("effect", effect.name)
     put("reason", reason.value)

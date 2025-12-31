@@ -1,9 +1,10 @@
 package com.ideascale.commons.authz.engine.catalog
 
-import com.ideascale.commons.authz.engine.dsl.GlobalPolicySetBase
-import com.ideascale.commons.authz.engine.model.Policy
+import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.context.*
 import com.ideascale.commons.authz.decision.ReasonCode
+import com.ideascale.commons.authz.engine.dsl.GlobalPolicySetBase
+import com.ideascale.commons.authz.engine.model.Policy
 
 /**
  * Global policies that apply across all resource types.
@@ -109,7 +110,7 @@ object GlobalPolicies : GlobalPolicySetBase() {
     val softBlockedSubscriptionDenyWrite: Policy = policy(
         (forbid(
             principal = { any() },
-            action = { write() },
+            action = { oneOf(Action.CREATE, Action.UPDATE, Action.DELETE) },
             resource = { any() }
         ) `when` {
             attribute { subscriptionState(SubscriptionState.SOFT_BLOCKED) }
@@ -125,7 +126,7 @@ object GlobalPolicies : GlobalPolicySetBase() {
     val readOnlySubscriptionDenyWrite: Policy = policy(
         (forbid(
             principal = { any() },
-            action = { write() },
+            action = { oneOf(Action.CREATE, Action.UPDATE, Action.DELETE) },
             resource = { any() }
         ) `when` {
             attribute { subscriptionState(SubscriptionState.READ_ONLY) }
@@ -158,7 +159,7 @@ object GlobalPolicies : GlobalPolicySetBase() {
     val workspaceReadOnlyDenyWrite: Policy = policy(
         (forbid(
             principal = { any() },
-            action = { write() },
+            action = { oneOf(Action.CREATE, Action.UPDATE, Action.DELETE) },
             resource = { any() }
         ) `when` {
             attribute { workspaceReadOnly() }

@@ -9,8 +9,8 @@ val authorizer = PolicyEngineAuthorizer(index)
 
 val decision = authorizer.authorize(
     principal = Principal(workspaceId = "w1", memberId = "m42"),
-    action = WorkspaceActionsHierarchy.update,
-    resource = Resource(ResourceType.WORKSPACE, id = "w1"),
+    action = Action.UPDATE,
+    resource = Resource.WORKSPACE,
     context = AuthorizationContext(...)
 )
 ```

@@ -2,7 +2,7 @@ package com.ideascale.commons.authz.engine.model
 
 import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.context.RoleId
-import com.ideascale.commons.authz.resource.ResourceType
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Role level for role-based scope matching.
@@ -44,8 +44,7 @@ sealed interface PrincipalScope {
 }
 
 /**
- * Action scope - defines which actions the policy applies to.
- * Designed to work with hierarchical action groups.
+ * Action scope - defines which CRUD actions the policy applies to.
  */
 sealed interface ActionScope {
     /** Matches any action */
@@ -53,12 +52,6 @@ sealed interface ActionScope {
 
     /** Matches exact action */
     data class Exact(val action: Action) : ActionScope
-
-    /** Matches any action classified as write */
-    data object Write : ActionScope
-
-    /** Matches if action is in the specified group (hierarchical) */
-    data class InGroup(val groupId: String) : ActionScope
 
     /** Matches any of the specified actions */
     data class OneOf(val actions: Set<Action>) : ActionScope
@@ -72,13 +65,10 @@ sealed interface ResourceScope {
     data object Any : ResourceScope
 
     /** Resource must be of specific type */
-    data class OfType(val type: ResourceType) : ResourceScope
+    data class OfType(val type: Resource) : ResourceScope
 
     /** Resource must be of any of specified types */
-    data class OfTypes(val types: Set<ResourceType>) : ResourceScope
-
-    /** Specific resource instance */
-    data class Exact(val type: ResourceType, val id: String) : ResourceScope
+    data class OfTypes(val types: Set<Resource>) : ResourceScope
 }
 
 /**

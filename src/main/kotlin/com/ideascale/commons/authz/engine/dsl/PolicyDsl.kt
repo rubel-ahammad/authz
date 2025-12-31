@@ -11,8 +11,8 @@ import com.ideascale.commons.authz.decision.ReasonCode
  * ```kotlin
  * permit(
  *     principal = { hasRole(RoleIds.WORKSPACE_ADMIN) },
- *     action = { `in`(IdeaActions.writeActions) },
- *     resource = { ofType(ResourceType.IDEA) }
+ *     action = { oneOf(Action.UPDATE, Action.DELETE) },
+ *     resource = { ofType(Resource.IDEA) }
  * )
  * ```
  */
@@ -33,7 +33,7 @@ fun permit(
  * ```kotlin
  * forbid(
  *     principal = { any() },
- *     action = { `in`(IdeaActions.writeActions) },
+ *     action = { oneOf(Action.UPDATE, Action.DELETE) },
  *     resource = { any() }
  * ) `when` {
  *     attribute { ideaState(IdeaState.LOCKED) }

@@ -1,10 +1,9 @@
 package com.ideascale.commons.authz.engine.dsl
 
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.action.HierarchicalActionGroup
-import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.context.RoleId
-import com.ideascale.commons.authz.resource.ResourceType
+import com.ideascale.commons.authz.engine.model.*
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * DSL builder for PrincipalScope.
@@ -80,9 +79,7 @@ class PrincipalScopeBuilder {
  *
  * Usage:
  * ```kotlin
- * action = {
- *     `in`(IdeaActions.writeActions)
- * }
+ * action = { oneOf(Action.UPDATE, Action.DELETE) }
  * ```
  */
 @CedarDslMarker
@@ -97,21 +94,6 @@ class ActionScopeBuilder {
     /** Match exact action */
     fun eq(action: Action) {
         scope = ActionScope.Exact(action)
-    }
-
-    /** Match any action classified as write */
-    fun write() {
-        scope = ActionScope.Write
-    }
-
-    /** Match if action is in the specified group */
-    fun `in`(group: HierarchicalActionGroup) {
-        scope = ActionScope.InGroup(group.id)
-    }
-
-    /** Match if action is in the group with specified ID */
-    fun `in`(groupId: String) {
-        scope = ActionScope.InGroup(groupId)
     }
 
     /** Match any of the specified actions (2 actions) */
@@ -138,7 +120,7 @@ class ActionScopeBuilder {
  * Usage:
  * ```kotlin
  * resource = {
- *     ofType(ResourceType.IDEA)
+ *     ofType(Resource.IDEA)
  * }
  * ```
  */
@@ -152,18 +134,13 @@ class ResourceScopeBuilder {
     }
 
     /** Match resource of specific type */
-    fun ofType(type: ResourceType) {
+    fun ofType(type: Resource) {
         scope = ResourceScope.OfType(type)
     }
 
     /** Match resource of any of specified types */
-    fun ofTypes(vararg types: ResourceType) {
+    fun ofTypes(vararg types: Resource) {
         scope = ResourceScope.OfTypes(types.toSet())
-    }
-
-    /** Match specific resource instance */
-    fun exact(type: ResourceType, id: String) {
-        scope = ResourceScope.Exact(type, id)
     }
 
     fun build(): ResourceScope = scope

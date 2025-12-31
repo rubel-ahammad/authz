@@ -1,9 +1,8 @@
 package com.ideascale.commons.authz.engine.eval
 
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.action.ActionGroupRegistry
 import com.ideascale.commons.authz.engine.model.*
-import com.ideascale.commons.authz.resource.ResourceType
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Index for efficient policy lookup during authorization evaluation.
@@ -26,7 +25,7 @@ import com.ideascale.commons.authz.resource.ResourceType
  */
 class PolicyIndex private constructor(
     private val allPolicies: List<Policy>,
-    private val byResourceType: Map<ResourceType, List<Policy>>,
+    private val byResource: Map<Resource, List<Policy>>,
     private val globalPolicies: List<Policy>,
     private val forbidPolicies: List<Policy>,
     private val permitPolicies: List<Policy>
@@ -35,15 +34,15 @@ class PolicyIndex private constructor(
      * Get all policies that might apply to a request.
      * Policies are not ordered; evaluation does not depend on ordering.
      */
-    fun getPoliciesFor(resourceType: ResourceType?, action: Action?): List<Policy> {
+    fun getPoliciesFor(resource: Resource?, action: Action?): List<Policy> {
         val candidates = mutableListOf<Policy>()
 
         // Add global policies (apply to all resources)
         candidates.addAll(globalPolicies)
 
         // Add resource-specific policies
-        if (resourceType != null) {
-            byResourceType[resourceType]?.let { candidates.addAll(it) }
+        if (resource != null) {
+            byResource[resource]?.let { candidates.addAll(it) }
         }
 
         return candidates
@@ -53,16 +52,16 @@ class PolicyIndex private constructor(
      * Get all forbid policies that might apply to a request.
      * Useful for early-exit optimization (forbid overrides permit).
      */
-    fun getForbidPoliciesFor(resourceType: ResourceType?): List<Policy> {
+    fun getForbidPoliciesFor(resource: Resource?): List<Policy> {
         val candidates = mutableListOf<Policy>()
 
         // Add global forbid policies
         candidates.addAll(forbidPolicies.filter { isGlobalPolicy(it) })
 
         // Add resource-specific forbid policies
-        if (resourceType != null) {
+        if (resource != null) {
             candidates.addAll(forbidPolicies.filter {
-                matchesResourceType(it, resourceType)
+                matchesResource(it, resource)
             })
         }
 
@@ -72,16 +71,16 @@ class PolicyIndex private constructor(
     /**
      * Get all permit policies that might apply to a request.
      */
-    fun getPermitPoliciesFor(resourceType: ResourceType?): List<Policy> {
+    fun getPermitPoliciesFor(resource: Resource?): List<Policy> {
         val candidates = mutableListOf<Policy>()
 
         // Add global permit policies
         candidates.addAll(permitPolicies.filter { isGlobalPolicy(it) })
 
         // Add resource-specific permit policies
-        if (resourceType != null) {
+        if (resource != null) {
             candidates.addAll(permitPolicies.filter {
-                matchesResourceType(it, resourceType)
+                matchesResource(it, resource)
             })
         }
 
@@ -101,19 +100,18 @@ class PolicyIndex private constructor(
         forbidPolicies = forbidPolicies.size,
         permitPolicies = permitPolicies.size,
         globalPolicies = globalPolicies.size,
-        resourceTypes = byResourceType.keys.toSet(),
-        policiesByResourceType = byResourceType.mapValues { it.value.size }
+        resources = byResource.keys.toSet(),
+        policiesByResource = byResource.mapValues { it.value.size }
     )
 
     private fun isGlobalPolicy(policy: Policy): Boolean =
         policy.scope.resource == ResourceScope.Any
 
-    private fun matchesResourceType(policy: Policy, resourceType: ResourceType): Boolean =
+    private fun matchesResource(policy: Policy, resource: Resource): Boolean =
         when (val scope = policy.scope.resource) {
             is ResourceScope.Any -> true
-            is ResourceScope.OfType -> scope.type == resourceType
-            is ResourceScope.OfTypes -> resourceType in scope.types
-            is ResourceScope.Exact -> scope.type == resourceType
+            is ResourceScope.OfType -> scope.type == resource
+            is ResourceScope.OfTypes -> resource in scope.types
         }
 
     companion object {
@@ -130,23 +128,20 @@ class PolicyIndex private constructor(
             val allPolicies = policySets
                 .flatMap { it.policies }
 
-            val byResourceType = mutableMapOf<ResourceType, MutableList<Policy>>()
+            val byResource = mutableMapOf<Resource, MutableList<Policy>>()
             val globalPolicies = mutableListOf<Policy>()
 
             for (policy in allPolicies) {
                 when (val scope = policy.scope.resource) {
                     is ResourceScope.Any -> globalPolicies.add(policy)
                     is ResourceScope.OfType -> {
-                        byResourceType.getOrPut(scope.type) { mutableListOf() }.add(policy)
+                        byResource.getOrPut(scope.type) { mutableListOf() }.add(policy)
                     }
                     is ResourceScope.OfTypes -> {
                         for (type in scope.types) {
-                            byResourceType.getOrPut(type) { mutableListOf() }.add(policy)
-                        }
+                            byResource.getOrPut(type) { mutableListOf() }.add(policy)
                     }
-                    is ResourceScope.Exact -> {
-                        byResourceType.getOrPut(scope.type) { mutableListOf() }.add(policy)
-                    }
+                }
                 }
             }
 
@@ -155,7 +150,7 @@ class PolicyIndex private constructor(
 
             return PolicyIndex(
                 allPolicies = allPolicies,
-                byResourceType = byResourceType,
+                byResource = byResource,
                 globalPolicies = globalPolicies,
                 forbidPolicies = forbidPolicies,
                 permitPolicies = permitPolicies
@@ -185,8 +180,8 @@ data class IndexStats(
     val forbidPolicies: Int,
     val permitPolicies: Int,
     val globalPolicies: Int,
-    val resourceTypes: Set<ResourceType>,
-    val policiesByResourceType: Map<ResourceType, Int>
+    val resources: Set<Resource>,
+    val policiesByResource: Map<Resource, Int>
 )
 
 /**

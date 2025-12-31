@@ -52,17 +52,15 @@ class PolicyEngineAuthorizer(
         action: Action,
         resource: Resource,
         context: AuthorizationContext
-    ): Decision {
-        return evaluator.evaluate(
-            principal = principal,
-            action = action,
-            resource = resource,
-            roleContext = context.roles,
-            resourceContext = context.resource,
-            relationshipContext = context.relationships,
-            attributeContext = context.attributes
-        )
-    }
+    ): Decision = evaluator.evaluate(
+        principal = principal,
+        action = action,
+        resource = resource,
+        roleContext = context.roles,
+        resourceContext = context.resource,
+        relationshipContext = context.relationships,
+        attributeContext = context.attributes
+    )
 
     /**
      * Get the underlying policy index.

@@ -146,7 +146,7 @@ data object TenantMismatchCondition : PolicyCondition {
 data object ResourceContextMismatchCondition : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
         val resourceCtx = ctx.resourceContext ?: return true
-        return resourceCtx.type != ctx.resource.type || resourceCtx.id != ctx.resource.id
+        return resourceCtx.type != ctx.resource
     }
 }
 

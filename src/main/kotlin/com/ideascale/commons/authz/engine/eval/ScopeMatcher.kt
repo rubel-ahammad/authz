@@ -2,9 +2,8 @@ package com.ideascale.commons.authz.engine.eval
 
 import com.ideascale.commons.authz.Principal
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.action.ActionMatcher
-import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.context.RoleContext
+import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.resource.Resource
 
 /**
@@ -81,7 +80,11 @@ object ScopeMatcher {
      * Check if action matches action scope.
      */
     fun matchesAction(action: Action, scope: ActionScope): Boolean =
-        ActionMatcher.matches(action, scope)
+        when (scope) {
+            is ActionScope.Any -> true
+            is ActionScope.Exact -> action == scope.action
+            is ActionScope.OneOf -> scope.actions.any { it == action }
+        }
 
     /**
      * Check if resource matches resource scope.
@@ -89,8 +92,7 @@ object ScopeMatcher {
     fun matchesResource(resource: Resource, scope: ResourceScope): Boolean =
         when (scope) {
             is ResourceScope.Any -> true
-            is ResourceScope.OfType -> resource.type == scope.type
-            is ResourceScope.OfTypes -> resource.type in scope.types
-            is ResourceScope.Exact -> resource.type == scope.type && resource.id == scope.id
+            is ResourceScope.OfType -> resource == scope.type
+            is ResourceScope.OfTypes -> resource in scope.types
         }
 }

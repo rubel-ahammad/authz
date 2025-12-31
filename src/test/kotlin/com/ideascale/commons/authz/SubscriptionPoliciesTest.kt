@@ -1,25 +1,24 @@
 package com.ideascale.commons.authz
 
+import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.context.*
 import com.ideascale.commons.authz.decision.ReasonCode
 import com.ideascale.commons.authz.engine.PolicyEngineAuthorizer
 import com.ideascale.commons.authz.engine.catalog.GlobalPolicies
-import com.ideascale.commons.authz.engine.catalog.WorkspaceActionsHierarchy
 import com.ideascale.commons.authz.engine.dsl.PolicySetBase
 import com.ideascale.commons.authz.engine.model.Policy
 import com.ideascale.commons.authz.resource.Resource
-import com.ideascale.commons.authz.resource.ResourceType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-private object TestWorkspacePolicies : PolicySetBase(ResourceType.WORKSPACE) {
+private object TestWorkspacePolicies : PolicySetBase(Resource.WORKSPACE) {
     val allowAll: Policy = policy(
         permit(
             principal = { any() },
             action = { any() },
-            resource = { ofType(ResourceType.WORKSPACE) }
+            resource = { ofType(Resource.WORKSPACE) }
         ).id("test.workspace.allow_all")
          .reason(ReasonCode.ALLOW_SYSTEM)
     )
@@ -37,11 +36,6 @@ class SubscriptionPoliciesTest {
     private fun principal(): Principal = Principal(
         workspaceId = workspaceId,
         memberId = "m-1"
-    )
-
-    private fun resource(): Resource = Resource(
-        type = ResourceType.WORKSPACE,
-        id = workspaceId
     )
 
     private fun context(state: SubscriptionState): AuthorizationContext =
@@ -63,16 +57,16 @@ class SubscriptionPoliciesTest {
     fun `active subscription allows read and write`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.read,
-            resource(),
+            Action.READ,
+            Resource.WORKSPACE,
             context(SubscriptionState.ACTIVE)
         )
         assertTrue(decisionRead.allowed)
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.update,
-            resource(),
+            Action.UPDATE,
+            Resource.WORKSPACE,
             context(SubscriptionState.ACTIVE)
         )
         assertTrue(decisionWrite.allowed)
@@ -82,8 +76,8 @@ class SubscriptionPoliciesTest {
     fun `blocked subscription denies read and write`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.read,
-            resource(),
+            Action.READ,
+            Resource.WORKSPACE,
             context(SubscriptionState.BLOCKED)
         )
         assertFalse(decisionRead.allowed)
@@ -91,8 +85,8 @@ class SubscriptionPoliciesTest {
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.update,
-            resource(),
+            Action.UPDATE,
+            Resource.WORKSPACE,
             context(SubscriptionState.BLOCKED)
         )
         assertFalse(decisionWrite.allowed)
@@ -103,16 +97,16 @@ class SubscriptionPoliciesTest {
     fun `soft blocked subscription denies write but allows read`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.read,
-            resource(),
+            Action.READ,
+            Resource.WORKSPACE,
             context(SubscriptionState.SOFT_BLOCKED)
         )
         assertTrue(decisionRead.allowed)
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.update,
-            resource(),
+            Action.UPDATE,
+            Resource.WORKSPACE,
             context(SubscriptionState.SOFT_BLOCKED)
         )
         assertFalse(decisionWrite.allowed)
@@ -123,16 +117,16 @@ class SubscriptionPoliciesTest {
     fun `read only subscription denies write but allows read`() {
         val decisionRead = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.read,
-            resource(),
+            Action.READ,
+            Resource.WORKSPACE,
             context(SubscriptionState.READ_ONLY)
         )
         assertTrue(decisionRead.allowed)
 
         val decisionWrite = authorizer.authorize(
             principal(),
-            WorkspaceActionsHierarchy.update,
-            resource(),
+            Action.UPDATE,
+            Resource.WORKSPACE,
             context(SubscriptionState.READ_ONLY)
         )
         assertFalse(decisionWrite.allowed)

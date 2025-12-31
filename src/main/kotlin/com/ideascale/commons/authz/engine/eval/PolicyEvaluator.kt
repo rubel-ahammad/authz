@@ -2,8 +2,8 @@ package com.ideascale.commons.authz.engine.eval
 
 import com.ideascale.commons.authz.Principal
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.context.*
+import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.decision.Decision
 import com.ideascale.commons.authz.decision.Effect
 import com.ideascale.commons.authz.decision.ReasonCode
@@ -65,7 +65,7 @@ class PolicyEvaluator private constructor(
         )
 
         // Use index for efficient policy lookup
-        val candidatePolicies = index.getPoliciesFor(resource.type, action)
+        val candidatePolicies = index.getPoliciesFor(resource, action)
 
         val applicablePolicies = findApplicablePolicies(
             candidatePolicies, principal, action, resource, roleContext, conditionContext

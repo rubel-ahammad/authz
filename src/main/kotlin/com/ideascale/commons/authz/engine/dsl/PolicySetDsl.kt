@@ -3,19 +3,19 @@ package com.ideascale.commons.authz.engine.dsl
 import com.ideascale.commons.authz.engine.model.Policy
 import com.ideascale.commons.authz.engine.model.PolicyEffect
 import com.ideascale.commons.authz.engine.model.PolicySet
-import com.ideascale.commons.authz.resource.ResourceType
+import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Base class for defining a set of policies for a resource type.
  *
  * Usage:
  * ```kotlin
- * object WorkspacePolicies : PolicySetBase(ResourceType.WORKSPACE) {
+ * object WorkspacePolicies : PolicySetBase(Resource.WORKSPACE) {
  *
  *     val adminFullAccess = policy(
  *         permit(
  *             principal = { hasRole(RoleIds.WORKSPACE_ADMIN) },
- *             action = { `in`(WorkspaceActionsHierarchy) },
+ *             action = { any() },
  *             resource = { any() }
  *         )
  *         .id("idea.admin.full_access")
@@ -25,7 +25,7 @@ import com.ideascale.commons.authz.resource.ResourceType
  *     val ownerCanEdit = policy(
  *         permit(
  *             principal = { authenticated() },
- *             action = { eq(WorkspaceActionsHierarchy.update) },
+ *             action = { eq(Action.UPDATE) },
  *             resource = { any() }
  *         ) `when` {
  *             relationship { isOwner() }
@@ -36,10 +36,10 @@ import com.ideascale.commons.authz.resource.ResourceType
  * }
  * ```
  *
- * @param resourceType Optional resource type this policy set applies to
+ * @param resource Optional resource this policy set applies to
  */
 abstract class PolicySetBase(
-    protected val resourceType: ResourceType? = null
+    protected val resource: Resource? = null
 ) {
     private val _policies = mutableSetOf<Policy>()
 
@@ -53,7 +53,7 @@ abstract class PolicySetBase(
     }
 
     /**
-     * Create a permit policy with default resource scope based on resourceType.
+     * Create a permit policy with default resource scope based on resource.
      */
     protected fun permit(
         principal: PrincipalScopeBuilder.() -> Unit = { any() },
@@ -66,7 +66,7 @@ abstract class PolicySetBase(
     }
 
     /**
-     * Create a forbid policy with default resource scope based on resourceType.
+     * Create a forbid policy with default resource scope based on resource.
      */
     protected fun forbid(
         principal: PrincipalScopeBuilder.() -> Unit = { any() },
@@ -79,8 +79,8 @@ abstract class PolicySetBase(
     }
 
     private fun defaultResourceScope(): ResourceScopeBuilder.() -> Unit = {
-        if (resourceType != null) {
-            ofType(resourceType)
+        if (resource != null) {
+            ofType(resource)
         } else {
             any()
         }
@@ -96,9 +96,9 @@ abstract class PolicySetBase(
      */
     fun toSet(): PolicySet = PolicySet(
         id = this::class.simpleName ?: "anonymous",
-        resourceType = resourceType,
+        resource = resource,
         policies = policies(),
-        description = "Policies for ${resourceType?.name ?: "global"}"
+        description = "Policies for ${resource?.name ?: "global"}"
     )
 }
 

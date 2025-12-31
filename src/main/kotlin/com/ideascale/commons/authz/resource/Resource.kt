@@ -1,16 +1,27 @@
 package com.ideascale.commons.authz.resource
 
 /**
- * Reference to a protected resource.
+ * Stable set of resources used across microservices.
  *
- * id: Use your canonical identifier for the resource (stringified UUID/Long/etc).
- * workspaceId is carried in Principal (tenant boundary), not duplicated here.
+ * Why enum?
+ * - Stable + discoverable
+ * - Plays well with Kotlin/JVM + JSON serialization
+ * - Prevents string drift ("Idea" vs "idea" vs "ideas")
+ *
+ * Evolve by ADDING new values; avoid renaming/removing to keep backward compatibility.
  */
-data class Resource(
-    val type: ResourceType,
-    val id: String
-) {
-    init {
-        require(id.isNotBlank()) { "Resource id cannot be blank" }
-    }
+enum class Resource {
+    WORKSPACE,
+    COMMUNITY,
+    CAMPAIGN,
+    GROUP,
+    IDEA,
+    MEMBER,
+
+    // Optional: if you have a dedicated "subscription" entity
+    SUBSCRIPTION,
+
+    // Optional: common cross-cutting resources
+    TRANSLATION,
+    MODERATION_CASE
 }
