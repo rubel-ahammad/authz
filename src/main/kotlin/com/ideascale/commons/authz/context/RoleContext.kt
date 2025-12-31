@@ -1,17 +1,20 @@
 package com.ideascale.commons.authz.context
 
-@JvmInline
-value class RoleId(val value: String) {
-    init {
-        require(value.isNotBlank()) { "RoleId cannot be blank" }
-    }
-
-    override fun toString(): String = value
+/**
+ * Canonical role identifiers recognized by the authorization engine.
+ */
+enum class Role {
+    WORKSPACE_ADMIN,
+    WORKSPACE_MEMBER,
+    CAMPAIGN_MODERATOR,
+    COMMUNITY_MEMBER,
+    ANONYMOUS,
+    ADMIN
 }
 
 data class RoleContext(
-    val workspaceRoles: Set<RoleId> = emptySet(),
-    val communityRoles: Set<RoleId> = emptySet(),
-    val campaignRoles: Set<RoleId> = emptySet(),
-    val groupRoles: Set<RoleId> = emptySet()
+    val workspaceRoles: Set<Role> = emptySet(),
+    val communityRoles: Set<Role> = emptySet(),
+    val campaignRoles: Set<Role> = emptySet(),
+    val groupRoles: Set<Role> = emptySet()
 )

@@ -10,7 +10,7 @@ import com.ideascale.commons.authz.context.*
  * Usage:
  * ```kotlin
  * `when` {
- *     role { hasRole(RoleIds.WORKSPACE_ADMIN) }
+ *     role { hasRole(Role.WORKSPACE_ADMIN) }
  *     relationship { isOwner() }
  * }
  * ```
@@ -75,33 +75,33 @@ class RoleConditionBuilder {
     private var condition: PolicyCondition? = null
 
     /** Check if principal has specific role at any level */
-    fun hasRole(roleId: RoleId) {
-        condition = HasRoleCondition(roleId)
+    fun hasRole(role: Role) {
+        condition = HasRoleCondition(role)
     }
 
     /** Check if principal has specific role at specific level */
-    fun hasRole(roleId: RoleId, at: RoleLevel) {
-        condition = HasRoleCondition(roleId, at)
+    fun hasRole(role: Role, at: RoleLevel) {
+        condition = HasRoleCondition(role, at)
     }
 
     /** Check if principal has any of the specified roles (2 roles) */
-    fun hasAnyRole(first: RoleId, second: RoleId) {
+    fun hasAnyRole(first: Role, second: Role) {
         condition = HasAnyRoleCondition(setOf(first, second))
     }
 
     /** Check if principal has any of the specified roles (3 roles) */
-    fun hasAnyRole(first: RoleId, second: RoleId, third: RoleId) {
+    fun hasAnyRole(first: Role, second: Role, third: Role) {
         condition = HasAnyRoleCondition(setOf(first, second, third))
     }
 
     /** Check if principal has any of the specified roles */
-    fun hasAnyRole(roleIds: Set<RoleId>) {
-        condition = HasAnyRoleCondition(roleIds)
+    fun hasAnyRole(roles: Set<Role>) {
+        condition = HasAnyRoleCondition(roles)
     }
 
     /** Check if principal has any of the specified roles at specific level */
-    fun hasAnyRole(roleIds: Set<RoleId>, at: RoleLevel) {
-        condition = HasAnyRoleCondition(roleIds, at)
+    fun hasAnyRole(roles: Set<Role>, at: RoleLevel) {
+        condition = HasAnyRoleCondition(roles, at)
     }
 
     fun build(): PolicyCondition = condition

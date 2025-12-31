@@ -1,7 +1,7 @@
 package com.ideascale.commons.authz.engine.dsl
 
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.context.RoleId
+import com.ideascale.commons.authz.context.Role
 import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.resource.Resource
 
@@ -11,7 +11,7 @@ import com.ideascale.commons.authz.resource.Resource
  * Usage:
  * ```kotlin
  * principal = {
- *     hasRole(RoleIds.WORKSPACE_ADMIN)
+ *     hasRole(Role.WORKSPACE_ADMIN)
  * }
  * ```
  */
@@ -35,28 +35,28 @@ class PrincipalScopeBuilder {
     }
 
     /** Match principal with specific role at any level */
-    fun hasRole(roleId: RoleId) {
-        scope = PrincipalScope.HasRole(roleId)
+    fun hasRole(role: Role) {
+        scope = PrincipalScope.HasRole(role)
     }
 
     /** Match principal with specific role at specific level */
-    fun hasRole(roleId: RoleId, at: RoleLevel) {
-        scope = PrincipalScope.HasRoleAt(roleId, at)
+    fun hasRole(role: Role, at: RoleLevel) {
+        scope = PrincipalScope.HasRoleAt(role, at)
     }
 
     /** Match principal with any of the specified roles (2 roles) */
-    fun hasAnyRole(first: RoleId, second: RoleId) {
+    fun hasAnyRole(first: Role, second: Role) {
         scope = PrincipalScope.HasAnyRole(setOf(first, second))
     }
 
     /** Match principal with any of the specified roles (3 roles) */
-    fun hasAnyRole(first: RoleId, second: RoleId, third: RoleId) {
+    fun hasAnyRole(first: Role, second: Role, third: Role) {
         scope = PrincipalScope.HasAnyRole(setOf(first, second, third))
     }
 
     /** Match principal with any of the specified roles */
-    fun hasAnyRole(roleIds: Set<RoleId>) {
-        scope = PrincipalScope.HasAnyRole(roleIds)
+    fun hasAnyRole(roles: Set<Role>) {
+        scope = PrincipalScope.HasAnyRole(roles)
     }
 
     /** Match if all scopes match (AND) */

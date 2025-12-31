@@ -1,7 +1,7 @@
 package com.ideascale.commons.authz.engine.model
 
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.context.RoleId
+import com.ideascale.commons.authz.context.Role
 import com.ideascale.commons.authz.resource.Resource
 
 /**
@@ -28,13 +28,13 @@ sealed interface PrincipalScope {
     data object Anonymous : PrincipalScope
 
     /** Principal must have specific role at any level */
-    data class HasRole(val roleId: RoleId) : PrincipalScope
+    data class HasRole(val role: Role) : PrincipalScope
 
     /** Principal must have role at specific level */
-    data class HasRoleAt(val roleId: RoleId, val level: RoleLevel) : PrincipalScope
+    data class HasRoleAt(val role: Role, val level: RoleLevel) : PrincipalScope
 
     /** Principal must have any of the specified roles */
-    data class HasAnyRole(val roleIds: Set<RoleId>) : PrincipalScope
+    data class HasAnyRole(val roles: Set<Role>) : PrincipalScope
 
     /** All scopes must match (AND) */
     data class All(val scopes: List<PrincipalScope>) : PrincipalScope

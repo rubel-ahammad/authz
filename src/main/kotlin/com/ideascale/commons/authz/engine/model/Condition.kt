@@ -52,20 +52,20 @@ data class NotCondition(val condition: PolicyCondition) : PolicyCondition {
  * Checks if principal has a specific role.
  */
 data class HasRoleCondition(
-    val roleId: RoleId,
+    val role: Role,
     val level: RoleLevel? = null
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
         val roleCtx = ctx.roleContext ?: return false
         return when (level) {
-            null -> roleId in roleCtx.workspaceRoles ||
-                    roleId in roleCtx.communityRoles ||
-                    roleId in roleCtx.campaignRoles ||
-                    roleId in roleCtx.groupRoles
-            RoleLevel.WORKSPACE -> roleId in roleCtx.workspaceRoles
-            RoleLevel.COMMUNITY -> roleId in roleCtx.communityRoles
-            RoleLevel.CAMPAIGN -> roleId in roleCtx.campaignRoles
-            RoleLevel.GROUP -> roleId in roleCtx.groupRoles
+            null -> role in roleCtx.workspaceRoles ||
+                    role in roleCtx.communityRoles ||
+                    role in roleCtx.campaignRoles ||
+                    role in roleCtx.groupRoles
+            RoleLevel.WORKSPACE -> role in roleCtx.workspaceRoles
+            RoleLevel.COMMUNITY -> role in roleCtx.communityRoles
+            RoleLevel.CAMPAIGN -> role in roleCtx.campaignRoles
+            RoleLevel.GROUP -> role in roleCtx.groupRoles
         }
     }
 }
@@ -74,21 +74,21 @@ data class HasRoleCondition(
  * Checks if principal has any of the specified roles.
  */
 data class HasAnyRoleCondition(
-    val roleIds: Set<RoleId>,
+    val roles: Set<Role>,
     val level: RoleLevel? = null
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
         val roleCtx = ctx.roleContext ?: return false
-        return roleIds.any { roleId ->
+        return roles.any { role ->
             when (level) {
-                null -> roleId in roleCtx.workspaceRoles ||
-                        roleId in roleCtx.communityRoles ||
-                        roleId in roleCtx.campaignRoles ||
-                        roleId in roleCtx.groupRoles
-                RoleLevel.WORKSPACE -> roleId in roleCtx.workspaceRoles
-                RoleLevel.COMMUNITY -> roleId in roleCtx.communityRoles
-                RoleLevel.CAMPAIGN -> roleId in roleCtx.campaignRoles
-                RoleLevel.GROUP -> roleId in roleCtx.groupRoles
+                null -> role in roleCtx.workspaceRoles ||
+                        role in roleCtx.communityRoles ||
+                        role in roleCtx.campaignRoles ||
+                        role in roleCtx.groupRoles
+                RoleLevel.WORKSPACE -> role in roleCtx.workspaceRoles
+                RoleLevel.COMMUNITY -> role in roleCtx.communityRoles
+                RoleLevel.CAMPAIGN -> role in roleCtx.campaignRoles
+                RoleLevel.GROUP -> role in roleCtx.groupRoles
             }
         }
     }

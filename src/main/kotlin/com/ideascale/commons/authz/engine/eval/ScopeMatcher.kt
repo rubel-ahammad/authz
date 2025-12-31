@@ -41,29 +41,29 @@ object ScopeMatcher {
 
         is PrincipalScope.HasRole -> {
             val rc = roleContext ?: return false
-            scope.roleId in rc.workspaceRoles ||
-            scope.roleId in rc.communityRoles ||
-            scope.roleId in rc.campaignRoles ||
-            scope.roleId in rc.groupRoles
+            scope.role in rc.workspaceRoles ||
+            scope.role in rc.communityRoles ||
+            scope.role in rc.campaignRoles ||
+            scope.role in rc.groupRoles
         }
 
         is PrincipalScope.HasRoleAt -> {
             val rc = roleContext ?: return false
             when (scope.level) {
-                RoleLevel.WORKSPACE -> scope.roleId in rc.workspaceRoles
-                RoleLevel.COMMUNITY -> scope.roleId in rc.communityRoles
-                RoleLevel.CAMPAIGN -> scope.roleId in rc.campaignRoles
-                RoleLevel.GROUP -> scope.roleId in rc.groupRoles
+                RoleLevel.WORKSPACE -> scope.role in rc.workspaceRoles
+                RoleLevel.COMMUNITY -> scope.role in rc.communityRoles
+                RoleLevel.CAMPAIGN -> scope.role in rc.campaignRoles
+                RoleLevel.GROUP -> scope.role in rc.groupRoles
             }
         }
 
         is PrincipalScope.HasAnyRole -> {
             val rc = roleContext ?: return false
-            scope.roleIds.any { roleId ->
-                roleId in rc.workspaceRoles ||
-                roleId in rc.communityRoles ||
-                roleId in rc.campaignRoles ||
-                roleId in rc.groupRoles
+            scope.roles.any { role ->
+                role in rc.workspaceRoles ||
+                role in rc.communityRoles ||
+                role in rc.campaignRoles ||
+                role in rc.groupRoles
             }
         }
 
