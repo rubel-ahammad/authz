@@ -63,21 +63,20 @@ class PolicyEvaluator private constructor(
             environmentContext = environmentContext
         )
 
-        // Use index for efficient policy lookup
-        val candidatePolicies = index.getPoliciesFor(resource, action)
-
-        val applicablePolicies = findApplicablePolicies(
-            candidatePolicies, principal, action, resource, principalContext, conditionContext
+        // Evaluate forbids first (forbid overrides permit)
+        val forbidCandidates = index.getForbidPoliciesFor(resource)
+        val forbids = findApplicablePolicies(
+            forbidCandidates, principal, action, resource, principalContext, conditionContext
         )
-
-        // Forbid overrides permit - check forbids first
-        val forbids = applicablePolicies.filter { it.effect == PolicyEffect.FORBID }
         if (forbids.isNotEmpty()) {
             return buildDecision(Effect.DENY, forbids, "forbid")
         }
 
-        // Check for permit
-        val permits = applicablePolicies.filter { it.effect == PolicyEffect.PERMIT }
+        // Then evaluate permits
+        val permitCandidates = index.getPermitPoliciesFor(resource)
+        val permits = findApplicablePolicies(
+            permitCandidates, principal, action, resource, principalContext, conditionContext
+        )
         if (permits.isNotEmpty()) {
             return buildDecision(Effect.ALLOW, permits, "permit")
         }
