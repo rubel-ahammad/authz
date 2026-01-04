@@ -50,25 +50,24 @@ class PolicyEvaluator private constructor(
         principal: Principal,
         action: Action,
         resource: Resource,
-        roleContext: RoleContext? = null,
+        principalContext: PrincipalContext? = null,
         resourceContext: ResourceContext? = null,
-        relationshipContext: RelationshipContext? = null,
-        attributeContext: AttributeContext? = null
+        environmentContext: EnvironmentContext? = null
     ): Decision {
         val conditionContext = ConditionContext(
             principal = principal,
+            action = action,
             resource = resource,
-            roleContext = roleContext,
+            principalContext = principalContext,
             resourceContext = resourceContext,
-            relationshipContext = relationshipContext,
-            attributeContext = attributeContext
+            environmentContext = environmentContext
         )
 
         // Use index for efficient policy lookup
         val candidatePolicies = index.getPoliciesFor(resource, action)
 
         val applicablePolicies = findApplicablePolicies(
-            candidatePolicies, principal, action, resource, roleContext, conditionContext
+            candidatePolicies, principal, action, resource, principalContext, conditionContext
         )
 
         // Forbid overrides permit - check forbids first
@@ -102,12 +101,12 @@ class PolicyEvaluator private constructor(
         principal: Principal,
         action: Action,
         resource: Resource,
-        roleContext: RoleContext?,
+        principalContext: PrincipalContext?,
         conditionContext: ConditionContext
     ): PolicyEvalResult {
         // Check scope match
         val scopeMatches = ScopeMatcher.matches(
-            principal, action, resource, roleContext, policy.scope
+            principal, action, resource, principalContext, policy.scope
         )
 
         if (!scopeMatches) {
@@ -132,12 +131,12 @@ class PolicyEvaluator private constructor(
         principal: Principal,
         action: Action,
         resource: Resource,
-        roleContext: RoleContext?,
+        principalContext: PrincipalContext?,
         conditionContext: ConditionContext
     ): List<Policy> {
         return candidates.mapNotNull { policy ->
             val result = evaluatePolicy(
-                policy, principal, action, resource, roleContext, conditionContext
+                policy, principal, action, resource, principalContext, conditionContext
             )
             when (result) {
                 is PolicyEvalResult.Applicable -> policy

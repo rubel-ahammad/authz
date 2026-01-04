@@ -13,9 +13,9 @@ import com.ideascale.commons.authz.resource.Resource
  * Usage:
  * ```kotlin
  * val context = AuthorizationContext(
- *     roles = RoleContext(...),
- *     relationships = RelationshipContext(...),
- *     attributes = AttributeContext(...)
+ *     principal = PrincipalContext(...),
+ *     resource = ResourceContext(...),
+ *     environment = EnvironmentContext(...)
  * )
  * val decision = authorizer.authorize(principal, action, resource, context)
  * ```
@@ -25,6 +25,6 @@ interface Authorizer {
         principal: Principal,
         action: Action,
         resource: Resource,
-        context: AuthorizationContext = AuthorizationContext()
+        context: AuthorizationContext = AuthorizationContext.anonymous()
     ): Decision
 }

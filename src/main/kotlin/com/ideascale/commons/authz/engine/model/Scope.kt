@@ -1,21 +1,27 @@
 package com.ideascale.commons.authz.engine.model
 
 import com.ideascale.commons.authz.action.Action
-import com.ideascale.commons.authz.context.Role
 import com.ideascale.commons.authz.resource.Resource
 
 /**
- * Role level for role-based scope matching.
- */
-enum class RoleLevel {
-    WORKSPACE,
-    COMMUNITY,
-    CAMPAIGN,
-    GROUP
-}
-
-/**
  * Principal scope - defines who the policy applies to.
+ *
+ * Following Cedar's membership pattern:
+ * - Scope answers: "Could this policy apply to this principal?"
+ * - Role-based scopes check if principal has that role for ANY resource
+ * - Conditions (in the policy) narrow down to specific resources
+ *
+ * Example:
+ * ```kotlin
+ * permit(
+ *     principal = IsCampaignModerator,  // Scope: user is moderator of some campaign
+ *     action = UPDATE,
+ *     resource = IDEA
+ * ).when {
+ *     // Condition: user is moderator of THIS campaign
+ *     principal.isCampaignModerator(idea.campaign.id)
+ * }
+ * ```
  */
 sealed interface PrincipalScope {
     /** Matches any principal (authenticated or anonymous) */
@@ -27,14 +33,37 @@ sealed interface PrincipalScope {
     /** Matches only anonymous principals */
     data object Anonymous : PrincipalScope
 
-    /** Principal must have specific role at any level */
-    data class HasRole(val role: Role) : PrincipalScope
+    // === WORKSPACE ROLES ===
 
-    /** Principal must have role at specific level */
-    data class HasRoleAt(val role: Role, val level: RoleLevel) : PrincipalScope
+    /** Principal is a workspace admin */
+    data object IsWorkspaceAdmin : PrincipalScope
 
-    /** Principal must have any of the specified roles */
-    data class HasAnyRole(val roles: Set<Role>) : PrincipalScope
+    /** Principal is a workspace member (includes admin) */
+    data object IsWorkspaceMember : PrincipalScope
+
+    // === ADMIN ROLES ===
+
+    /** Principal is admin of at least one community */
+    data object IsCommunityAdmin : PrincipalScope
+
+    /** Principal is admin of at least one campaign */
+    data object IsCampaignAdmin : PrincipalScope
+
+    // === MODERATOR ROLES ===
+
+    /** Principal is moderator of at least one community */
+    data object IsCommunityModerator : PrincipalScope
+
+    /** Principal is moderator of at least one campaign */
+    data object IsCampaignModerator : PrincipalScope
+
+    /** Principal is moderator of at least one group */
+    data object IsGroupModerator : PrincipalScope
+
+    /** Principal is moderator of at least one custom field */
+    data object IsCustomFieldModerator : PrincipalScope
+
+    // === COMPOSITE SCOPES ===
 
     /** All scopes must match (AND) */
     data class All(val scopes: List<PrincipalScope>) : PrincipalScope

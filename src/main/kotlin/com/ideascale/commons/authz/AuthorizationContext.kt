@@ -1,82 +1,102 @@
 package com.ideascale.commons.authz
 
-import com.ideascale.commons.authz.context.*
+import com.ideascale.commons.authz.context.EnvironmentContext
+import com.ideascale.commons.authz.context.PrincipalContext
+import com.ideascale.commons.authz.context.ResourceContext
 
 /**
- * Context for authorization evaluation.
+ * Complete context for an authorization decision.
  *
- * Callers build this with whatever context data they have available.
- * All fields are optional - policies gracefully handle missing context
- * (conditions that need missing context evaluate to false).
+ * Combines:
+ * - **PrincipalContext**: WHO (roles + member attributes) - Cedar Membership Pattern
+ * - **ResourceContext**: WHAT (resource + relationships + attributes) - Cedar Relationship Pattern
+ * - **EnvironmentContext**: WHERE/WHEN/HOW (request metadata)
  *
  * Usage:
  * ```kotlin
- * // Full context
  * val context = AuthorizationContext(
- *     roles = RoleContext(...),
- *     relationships = RelationshipContext(...),
- *     attributes = AttributeContext(...),
- *     resource = IdeaContext(...)
+ *     principal = PrincipalContext(
+ *         status = MemberStatus.ACTIVE,
+ *         workspaceRole = WorkspaceRole.MEMBER,
+ *         campaignModerator = setOf(456L)
+ *     ),
+ *     resource = IdeaContext(
+ *         id = 789L,
+ *         workspace = WorkspaceAttributes(id = 1L),
+ *         community = CommunityAttributes(id = 10L),
+ *         campaign = CampaignAttributes(id = 456L),
+ *         state = IdeaState.ACTIVE,
+ *         owner = 123L
+ *     ),
+ *     environment = EnvironmentContext(ip = "192.168.1.1")
  * )
  *
- * // Partial context (e.g., only roles needed)
- * val context = AuthorizationContext(
- *     roles = RoleContext(...)
- * )
- *
- * // With request metadata
- * val context = AuthorizationContext.builder()
- *     .requestId("req-123")
- *     .roles(roleContext)
- *     .relationships(relationshipContext)
- *     .build()
+ * // Policy checks:
+ * context.principal.isCampaignModerator(456L)
+ * (context.resource as IdeaContext).isOwner(123L)
+ * context.resource.workspace.subscriptionState == SubscriptionState.ACTIVE
  * ```
  */
 data class AuthorizationContext(
-    // Request metadata
-    val requestId: String? = null,
-    val ip: String? = null,
-    val userAgent: String? = null,
-    val channel: Channel = Channel.PUBLIC_API,
+    /**
+     * Principal's roles and attributes (Membership Pattern + ABAC).
+     */
+    val principal: PrincipalContext,
 
-    // Authorization context (all optional for flexibility)
-    val roles: RoleContext? = null,
-    val relationships: RelationshipContext? = null,
-    val attributes: AttributeContext? = null,
-    val resource: ResourceContext? = null
+    /**
+     * Resource being accessed with its relationships and attributes (Relationship Pattern + ABAC).
+     * Null when checking workspace-level permissions without a specific resource.
+     */
+    val resource: ResourceContext? = null,
+
+    /**
+     * Request environment metadata.
+     */
+    val environment: EnvironmentContext = EnvironmentContext()
 ) {
     companion object {
+        /**
+         * Create a builder for AuthorizationContext.
+         */
         fun builder() = Builder()
+
+        /**
+         * Create context for anonymous access.
+         */
+        fun anonymous(resource: ResourceContext? = null, environment: EnvironmentContext = EnvironmentContext()) =
+            AuthorizationContext(
+                principal = PrincipalContext.ANONYMOUS,
+                resource = resource,
+                environment = environment
+            )
     }
 
     class Builder {
-        private var requestId: String? = null
-        private var ip: String? = null
-        private var userAgent: String? = null
-        private var channel: Channel = Channel.PUBLIC_API
-        private var roles: RoleContext? = null
-        private var relationships: RelationshipContext? = null
-        private var attributes: AttributeContext? = null
+        private var principal: PrincipalContext = PrincipalContext.ANONYMOUS
         private var resource: ResourceContext? = null
+        private var environment: EnvironmentContext = EnvironmentContext()
 
-        fun requestId(value: String?) = apply { requestId = value }
-        fun ip(value: String?) = apply { ip = value }
-        fun userAgent(value: String?) = apply { userAgent = value }
-        fun channel(value: Channel) = apply { channel = value }
-        fun roles(value: RoleContext?) = apply { roles = value }
-        fun relationships(value: RelationshipContext?) = apply { relationships = value }
-        fun attributes(value: AttributeContext?) = apply { attributes = value }
+        fun principal(value: PrincipalContext) = apply { principal = value }
         fun resource(value: ResourceContext?) = apply { resource = value }
+        fun environment(value: EnvironmentContext) = apply { environment = value }
+
+        // Convenience setters for environment
+        fun ip(value: String?) = apply {
+            environment = environment.copy(ip = value)
+        }
+
+        fun channel(value: Channel) = apply {
+            environment = environment.copy(channel = value)
+        }
+
+        fun requestId(value: String) = apply {
+            environment = environment.copy(requestId = value)
+        }
 
         fun build() = AuthorizationContext(
-            requestId = requestId,
-            ip = ip,
-            userAgent = userAgent,
-            channel = channel,
-            roles = roles,
-            relationships = relationships,
-            attributes = attributes,
-            resource = resource
+            principal = principal,
+            resource = resource,
+            environment = environment
         )
     }
 }

@@ -24,9 +24,9 @@ import com.ideascale.commons.authz.resource.Resource
  *
  * // Caller builds context with whatever data they have
  * val context = AuthorizationContext(
- *     roles = RoleContext(...),
- *     relationships = RelationshipContext(...),
- *     attributes = AttributeContext(...)
+ *     principal = PrincipalContext(...),
+ *     resource = ResourceContext(...),
+ *     environment = EnvironmentContext(...)
  * )
  *
  * // Authorize
@@ -56,10 +56,9 @@ class PolicyEngineAuthorizer(
         principal = principal,
         action = action,
         resource = resource,
-        roleContext = context.roles,
+        principalContext = context.principal,
         resourceContext = context.resource,
-        relationshipContext = context.relationships,
-        attributeContext = context.attributes
+        environmentContext = context.environment
     )
 
     /**

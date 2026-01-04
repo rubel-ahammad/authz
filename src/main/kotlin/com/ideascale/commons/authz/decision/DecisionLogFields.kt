@@ -14,22 +14,22 @@ fun Decision.toLogFields(
     resource: Resource,
     context: AuthorizationContext
 ): Map<String, String> = buildMap {
-    put("workspaceId", principal.workspaceId)
-    principal.memberId?.let { put("memberId", it) }
-    put("principalType", principal.principalType.name)
-    principal.actorMemberId?.let { put("actorMemberId", it) }
+    put("workspaceId", principal.workspaceId.toString())
+    principal.id?.let { put("memberId", it.toString()) }
+    put("principalType", principal.type.name)
+    principal.actorId?.let { put("actorMemberId", it.toString()) }
 
     put("action", action.name)
     put("resourceType", resource.name)
-    context.resource?.id?.let { put("resourceId", it) }
+    context.resource?.id?.let { put("resourceId", it.toString()) }
 
     put("effect", effect.name)
     put("reason", reason.value)
     put("decisionId", decisionId)
 
-    context.requestId?.let { put("requestId", it) }
-    context.ip?.let { put("ip", it) }
-    put("channel", context.channel.name)
+    put("requestId", context.environment.requestId)
+    context.environment.ip?.let { put("ip", it) }
+    put("channel", context.environment.channel.name)
 
     // Include details last
     details.forEach { (k, v) -> put("detail.$k", v) }

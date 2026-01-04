@@ -14,7 +14,7 @@ import com.ideascale.commons.authz.resource.Resource
  *
  *     val adminFullAccess = policy(
  *         permit(
- *             principal = { hasRole(Role.WORKSPACE_ADMIN) },
+ *             principal = { isWorkspaceAdmin() },
  *             action = { any() },
  *             resource = { any() }
  *         )

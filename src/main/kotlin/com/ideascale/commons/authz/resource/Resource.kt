@@ -17,6 +17,7 @@ enum class Resource {
     GROUP,
     IDEA,
     MEMBER,
+    CUSTOM_FIELD,
 
     // Optional: if you have a dedicated "subscription" entity
     SUBSCRIPTION,

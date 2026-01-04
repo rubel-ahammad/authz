@@ -10,7 +10,7 @@ import com.ideascale.commons.authz.decision.ReasonCode
  * Usage:
  * ```kotlin
  * permit(
- *     principal = { hasRole(Role.WORKSPACE_ADMIN) },
+ *     principal = { isWorkspaceAdmin() },
  *     action = { oneOf(Action.UPDATE, Action.DELETE) },
  *     resource = { ofType(Resource.IDEA) }
  * )

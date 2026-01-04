@@ -14,6 +14,22 @@ import kotlin.test.assertTrue
 
 class WorkspaceAnonymousAccessTest {
 
+    private val workspaceId = 1L
+
+    private fun context(isPublic: Boolean, principalContext: PrincipalContext): AuthorizationContext =
+        AuthorizationContext(
+            principal = principalContext,
+            resource = WorkspaceContext(
+                id = workspaceId,
+                workspace = WorkspaceAttributes(
+                    id = workspaceId,
+                    subscriptionState = SubscriptionState.ACTIVE,
+                    isPublic = isPublic
+                )
+            ),
+            environment = EnvironmentContext(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
+        )
+
     @Test
     fun `anonymous can read public workspace`() {
         val authorizer = PolicyEngineAuthorizer(
@@ -21,21 +37,8 @@ class WorkspaceAnonymousAccessTest {
             WorkspacePolicies.toSet()
         )
 
-        val workspaceId = "w-1"
-        val principal = Principal(workspaceId = workspaceId, memberId = null)
-        val context = AuthorizationContext(
-            resource = WorkspaceContext(workspaceId),
-            attributes = AttributeContext(
-                workspace = WorkspaceAttrs(
-                    subscription = SubscriptionAttrs(SubscriptionState.ACTIVE),
-                    network = NetworkAttrs(IpRestrictionResult.Allowed),
-                    emailDomain = EmailDomainAttrs(),
-                    flags = WorkspaceFlags(isPublic = true)
-                ),
-                member = MemberAttrs(MemberStatus.MEMBER),
-                request = RequestAttrs(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
-            )
-        )
+        val principal = Principal.anonymous(workspaceId)
+        val context = context(isPublic = true, principalContext = PrincipalContext.ANONYMOUS)
 
         val readDecision = authorizer.authorize(
             principal,
@@ -53,21 +56,8 @@ class WorkspaceAnonymousAccessTest {
             WorkspacePolicies.toSet()
         )
 
-        val workspaceId = "w-1"
-        val principal = Principal(workspaceId = workspaceId, memberId = "m-1")
-        val context = AuthorizationContext(
-            resource = WorkspaceContext(workspaceId),
-            attributes = AttributeContext(
-                workspace = WorkspaceAttrs(
-                    subscription = SubscriptionAttrs(SubscriptionState.ACTIVE),
-                    network = NetworkAttrs(IpRestrictionResult.Allowed),
-                    emailDomain = EmailDomainAttrs(),
-                    flags = WorkspaceFlags(isPublic = true)
-                ),
-                member = MemberAttrs(MemberStatus.MEMBER),
-                request = RequestAttrs(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
-            )
-        )
+        val principal = Principal.user(id = 42L, workspaceId = workspaceId)
+        val context = context(isPublic = true, principalContext = PrincipalContext())
 
         val readDecision = authorizer.authorize(
             principal,
@@ -85,21 +75,8 @@ class WorkspaceAnonymousAccessTest {
             WorkspacePolicies.toSet()
         )
 
-        val workspaceId = "w-1"
-        val principal = Principal(workspaceId = workspaceId, memberId = null)
-        val context = AuthorizationContext(
-            resource = WorkspaceContext(workspaceId),
-            attributes = AttributeContext(
-                workspace = WorkspaceAttrs(
-                    subscription = SubscriptionAttrs(SubscriptionState.ACTIVE),
-                    network = NetworkAttrs(IpRestrictionResult.Allowed),
-                    emailDomain = EmailDomainAttrs(),
-                    flags = WorkspaceFlags(isPublic = false)
-                ),
-                member = MemberAttrs(MemberStatus.MEMBER),
-                request = RequestAttrs(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
-            )
-        )
+        val principal = Principal.anonymous(workspaceId)
+        val context = context(isPublic = false, principalContext = PrincipalContext.ANONYMOUS)
 
         val decision = authorizer.authorize(
             principal,
@@ -117,21 +94,8 @@ class WorkspaceAnonymousAccessTest {
             WorkspacePolicies.toSet()
         )
 
-        val workspaceId = "w-1"
-        val principal = Principal(workspaceId = workspaceId, memberId = null)
-        val context = AuthorizationContext(
-            resource = WorkspaceContext(workspaceId),
-            attributes = AttributeContext(
-                workspace = WorkspaceAttrs(
-                    subscription = SubscriptionAttrs(SubscriptionState.ACTIVE),
-                    network = NetworkAttrs(IpRestrictionResult.Allowed),
-                    emailDomain = EmailDomainAttrs(),
-                    flags = WorkspaceFlags(isPublic = false)
-                ),
-                member = MemberAttrs(MemberStatus.MEMBER),
-                request = RequestAttrs(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
-            )
-        )
+        val principal = Principal.anonymous(workspaceId)
+        val context = context(isPublic = false, principalContext = PrincipalContext.ANONYMOUS)
 
         val decision = authorizer.authorize(
             principal,

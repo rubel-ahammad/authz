@@ -26,31 +26,31 @@ private object TestWorkspacePolicies : PolicySetBase(Resource.WORKSPACE) {
 
 class SubscriptionPoliciesTest {
 
-    private val workspaceId = "w-1"
+    private val workspaceId = 1L
 
     private val authorizer = PolicyEngineAuthorizer(
         GlobalPolicies.toSet(),
         TestWorkspacePolicies.toSet()
     )
 
-    private fun principal(): Principal = Principal(
-        workspaceId = workspaceId,
-        memberId = "m-1"
+    private fun principal(): Principal = Principal.user(
+        id = 42L,
+        workspaceId = workspaceId
     )
 
     private fun context(state: SubscriptionState): AuthorizationContext =
         AuthorizationContext(
-            resource = WorkspaceContext(workspaceId),
-            attributes = AttributeContext(
-                workspace = WorkspaceAttrs(
-                    subscription = SubscriptionAttrs(state),
-                    network = NetworkAttrs(IpRestrictionResult.Allowed),
-                    emailDomain = EmailDomainAttrs(),
-                    flags = WorkspaceFlags(isPublic = true, isReadOnlyMode = false)
-                ),
-                member = MemberAttrs(MemberStatus.MEMBER),
-                request = RequestAttrs(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
-            )
+            principal = PrincipalContext(),
+            resource = WorkspaceContext(
+                id = workspaceId,
+                workspace = WorkspaceAttributes(
+                    id = workspaceId,
+                    subscriptionState = state,
+                    isPublic = true,
+                    isReadOnly = false
+                )
+            ),
+            environment = EnvironmentContext(ip = "203.0.113.1", channel = Channel.PUBLIC_API)
         )
 
     @Test

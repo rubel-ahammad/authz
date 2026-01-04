@@ -1,19 +1,26 @@
 package com.ideascale.commons.authz.engine.model
 
 import com.ideascale.commons.authz.Principal
+import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.context.*
 import com.ideascale.commons.authz.resource.Resource
 
 /**
  * Context available for condition evaluation.
+ *
+ * Provides access to:
+ * - Principal identity and context (roles + attributes)
+ * - Action being requested
+ * - Resource context (type-specific attributes and relationships)
+ * - Environment context (request metadata)
  */
 data class ConditionContext(
     val principal: Principal,
+    val action: Action,
     val resource: Resource,
-    val roleContext: RoleContext?,
+    val principalContext: PrincipalContext?,
     val resourceContext: ResourceContext?,
-    val relationshipContext: RelationshipContext?,
-    val attributeContext: AttributeContext?
+    val environmentContext: EnvironmentContext?
 )
 
 /**
@@ -45,83 +52,164 @@ data class NotCondition(val condition: PolicyCondition) : PolicyCondition {
 }
 
 // ============================================================================
-// Role Conditions (Membership Permissions)
+// Role Conditions (Membership Pattern)
+// These check if principal has a role for the SPECIFIC resource being accessed
 // ============================================================================
 
 /**
- * Checks if principal has a specific role.
+ * Checks if principal is a workspace admin.
  */
-data class HasRoleCondition(
-    val role: Role,
-    val level: RoleLevel? = null
-) : PolicyCondition {
+data object IsWorkspaceAdminCondition : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val roleCtx = ctx.roleContext ?: return false
-        return when (level) {
-            null -> role in roleCtx.workspaceRoles ||
-                    role in roleCtx.communityRoles ||
-                    role in roleCtx.campaignRoles ||
-                    role in roleCtx.groupRoles
-            RoleLevel.WORKSPACE -> role in roleCtx.workspaceRoles
-            RoleLevel.COMMUNITY -> role in roleCtx.communityRoles
-            RoleLevel.CAMPAIGN -> role in roleCtx.campaignRoles
-            RoleLevel.GROUP -> role in roleCtx.groupRoles
+        val principalCtx = ctx.principalContext ?: return false
+        return principalCtx.isWorkspaceAdmin()
+    }
+}
+
+/**
+ * Checks if principal is admin of the community in the resource context.
+ */
+data object IsCommunityAdminCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalCtx = ctx.principalContext ?: return false
+        val communityId = ctx.resourceContext?.let { extractCommunityId(it) } ?: return false
+        return principalCtx.isCommunityAdmin(communityId)
+    }
+}
+
+/**
+ * Checks if principal is admin of the campaign in the resource context.
+ */
+data object IsCampaignAdminCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalCtx = ctx.principalContext ?: return false
+        val campaignId = ctx.resourceContext?.let { extractCampaignId(it) } ?: return false
+        return principalCtx.isCampaignAdmin(campaignId)
+    }
+}
+
+/**
+ * Checks if principal is moderator of the community in the resource context.
+ */
+data object IsCommunityModeratorCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalCtx = ctx.principalContext ?: return false
+        val communityId = ctx.resourceContext?.let { extractCommunityId(it) } ?: return false
+        return principalCtx.isCommunityModerator(communityId)
+    }
+}
+
+/**
+ * Checks if principal is moderator of the campaign in the resource context.
+ */
+data object IsCampaignModeratorCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalCtx = ctx.principalContext ?: return false
+        val campaignId = ctx.resourceContext?.let { extractCampaignId(it) } ?: return false
+        return principalCtx.isCampaignModerator(campaignId)
+    }
+}
+
+/**
+ * Checks if principal is moderator of the group in the resource context.
+ */
+data object IsGroupModeratorCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalCtx = ctx.principalContext ?: return false
+        val resourceCtx = ctx.resourceContext
+        val groupId = when (resourceCtx) {
+            is GroupContext -> resourceCtx.id
+            else -> return false
+        }
+        return principalCtx.isGroupModerator(groupId)
+    }
+}
+
+/**
+ * Checks if principal is moderator of the custom field in the resource context.
+ */
+data object IsCustomFieldModeratorCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalCtx = ctx.principalContext ?: return false
+        val resourceCtx = ctx.resourceContext
+        val fieldId = when (resourceCtx) {
+            is CustomFieldContext -> resourceCtx.id
+            else -> return false
+        }
+        return principalCtx.isCustomFieldModerator(fieldId)
+    }
+}
+
+// ============================================================================
+// Relationship Conditions (Relationship Pattern)
+// ============================================================================
+
+/**
+ * Checks if principal is the owner of the idea.
+ */
+data object IsIdeaOwnerCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalId = ctx.principal.id ?: return false
+        val resourceCtx = ctx.resourceContext
+        return when (resourceCtx) {
+            is IdeaContext -> resourceCtx.isOwner(principalId)
+            else -> false
         }
     }
 }
 
 /**
- * Checks if principal has any of the specified roles.
+ * Checks if principal is a contributor to the idea.
  */
-data class HasAnyRoleCondition(
-    val roles: Set<Role>,
-    val level: RoleLevel? = null
-) : PolicyCondition {
+data object IsIdeaContributorCondition : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val roleCtx = ctx.roleContext ?: return false
-        return roles.any { role ->
-            when (level) {
-                null -> role in roleCtx.workspaceRoles ||
-                        role in roleCtx.communityRoles ||
-                        role in roleCtx.campaignRoles ||
-                        role in roleCtx.groupRoles
-                RoleLevel.WORKSPACE -> role in roleCtx.workspaceRoles
-                RoleLevel.COMMUNITY -> role in roleCtx.communityRoles
-                RoleLevel.CAMPAIGN -> role in roleCtx.campaignRoles
-                RoleLevel.GROUP -> role in roleCtx.groupRoles
-            }
+        val principalId = ctx.principal.id ?: return false
+        val resourceCtx = ctx.resourceContext
+        return when (resourceCtx) {
+            is IdeaContext -> resourceCtx.isContributor(principalId)
+            else -> false
         }
     }
 }
 
-// ============================================================================
-// Relationship Conditions (Relationship Permissions)
-// ============================================================================
-
 /**
- * Checks if principal is the owner of the resource.
+ * Checks if principal is a viewer of the idea.
  */
-data class IsOwnerCondition(val of: OwnershipType = OwnershipType.IDEA) : PolicyCondition {
+data object IsIdeaViewerCondition : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val relCtx = ctx.relationshipContext ?: return false
-        return when (of) {
-            OwnershipType.IDEA -> relCtx.isIdeaOwner
+        val principalId = ctx.principal.id ?: return false
+        val resourceCtx = ctx.resourceContext
+        return when (resourceCtx) {
+            is IdeaContext -> resourceCtx.isViewer(principalId)
+            else -> false
         }
     }
 }
 
-enum class OwnershipType { IDEA }
+/**
+ * Checks if principal has any relationship to the idea (owner, contributor, or viewer).
+ */
+data object HasIdeaRelationshipCondition : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val principalId = ctx.principal.id ?: return false
+        val resourceCtx = ctx.resourceContext
+        return when (resourceCtx) {
+            is IdeaContext -> resourceCtx.hasAnyRelationship(principalId)
+            else -> false
+        }
+    }
+}
 
 /**
- * Checks if principal has access via group membership.
+ * Checks if principal is a member of the group.
  */
-data class InGroupCondition(val groupIds: Set<String>? = null) : PolicyCondition {
+data object IsGroupMemberCondition : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val relCtx = ctx.relationshipContext ?: return false
-        return if (groupIds == null) {
-            relCtx.viaGroupIds.isNotEmpty()
-        } else {
-            relCtx.viaGroupIds.any { it in groupIds }
+        val principalId = ctx.principal.id ?: return false
+        val resourceCtx = ctx.resourceContext
+        return when (resourceCtx) {
+            is GroupContext -> resourceCtx.isMember(principalId)
+            else -> false
         }
     }
 }
@@ -131,17 +219,17 @@ data class InGroupCondition(val groupIds: Set<String>? = null) : PolicyCondition
 // ============================================================================
 
 /**
- * Checks if the request crosses tenant boundaries or lacks resource context.
+ * Checks if the request crosses tenant boundaries.
  */
 data object TenantMismatchCondition : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val resourceWorkspaceId = ctx.resourceContext?.workspaceId ?: return true
+        val resourceWorkspaceId = ctx.resourceContext?.workspace?.id ?: return true
         return resourceWorkspaceId != ctx.principal.workspaceId
     }
 }
 
 /**
- * Checks if resource context doesn't match the requested resource (or is missing).
+ * Checks if resource context doesn't match the requested resource type.
  */
 data object ResourceContextMismatchCondition : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
@@ -162,7 +250,11 @@ data class IdeaStateCondition(
     val negate: Boolean = false
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val ideaState = ctx.attributeContext?.idea?.state ?: return false
+        val resourceCtx = ctx.resourceContext
+        val ideaState = when (resourceCtx) {
+            is IdeaContext -> resourceCtx.state
+            else -> return false
+        }
         val matches = ideaState in states
         return if (negate) !matches else matches
     }
@@ -176,7 +268,12 @@ data class CampaignStateCondition(
     val negate: Boolean = false
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val campaignState = ctx.attributeContext?.campaign?.state ?: return false
+        val resourceCtx = ctx.resourceContext
+        val campaignState = when (resourceCtx) {
+            is CampaignContext -> resourceCtx.state
+            is IdeaContext -> resourceCtx.campaign.state
+            else -> return false
+        }
         val matches = campaignState in states
         return if (negate) !matches else matches
     }
@@ -190,21 +287,27 @@ data class CommunityStatusCondition(
     val negate: Boolean = false
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val status = ctx.attributeContext?.community?.status ?: return false
+        val resourceCtx = ctx.resourceContext
+        val status = when (resourceCtx) {
+            is CommunityContext -> resourceCtx.status
+            is CampaignContext -> resourceCtx.community.status
+            is IdeaContext -> resourceCtx.community.status
+            else -> return false
+        }
         val matches = status in statuses
         return if (negate) !matches else matches
     }
 }
 
 /**
- * Checks member status.
+ * Checks principal's member status.
  */
 data class MemberStatusCondition(
     val statuses: Set<MemberStatus>,
     val negate: Boolean = false
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val status = ctx.attributeContext?.member?.status ?: return false
+        val status = ctx.principalContext?.status ?: return false
         val matches = status in statuses
         return if (negate) !matches else matches
     }
@@ -218,7 +321,7 @@ data class SubscriptionStateCondition(
     val negate: Boolean = false
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val state = ctx.attributeContext?.workspace?.subscription?.state ?: return false
+        val state = ctx.resourceContext?.workspace?.subscriptionState ?: return false
         val matches = state in states
         return if (negate) !matches else matches
     }
@@ -229,8 +332,8 @@ data class SubscriptionStateCondition(
  */
 data class WorkspaceReadOnlyCondition(val isReadOnly: Boolean = true) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val flags = ctx.attributeContext?.workspace?.flags ?: return false
-        return flags.isReadOnlyMode == isReadOnly
+        val workspaceReadOnly = ctx.resourceContext?.workspace?.isReadOnly ?: return false
+        return workspaceReadOnly == isReadOnly
     }
 }
 
@@ -239,8 +342,24 @@ data class WorkspaceReadOnlyCondition(val isReadOnly: Boolean = true) : PolicyCo
  */
 data class WorkspacePublicCondition(val isPublic: Boolean = true) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val flags = ctx.attributeContext?.workspace?.flags ?: return false
-        return flags.isPublic == isPublic
+        val workspacePublic = ctx.resourceContext?.workspace?.isPublic ?: return false
+        return workspacePublic == isPublic
+    }
+}
+
+/**
+ * Checks if community is private.
+ */
+data class CommunityPrivateCondition(val isPrivate: Boolean = true) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val resourceCtx = ctx.resourceContext
+        val communityPrivate = when (resourceCtx) {
+            is CommunityContext -> resourceCtx.isPrivate
+            is CampaignContext -> resourceCtx.community.isPrivate
+            is IdeaContext -> resourceCtx.community.isPrivate
+            else -> return false
+        }
+        return communityPrivate == isPrivate
     }
 }
 
@@ -252,20 +371,27 @@ data class RequestIpInCondition(
     val negate: Boolean = false
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val ip = ctx.attributeContext?.request?.ip ?: return false
+        val ip = ctx.environmentContext?.ip ?: return false
         val matches = ip in ips
         return if (negate) !matches else matches
     }
 }
 
 /**
- * Checks IP restriction result.
+ * Checks if IP is restricted (denied by workspace IP restrictions).
  */
 data class IpRestrictedCondition(val isDenied: Boolean = true) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean {
-        val result = ctx.attributeContext?.workspace?.network?.ipRestriction ?: return false
-        val denied = result is IpRestrictionResult.Denied
-        return denied == isDenied
+        val restrictions = ctx.resourceContext?.workspace?.ipRestrictions ?: return false
+        val requestIp = ctx.environmentContext?.ip ?: return isDenied // No IP = denied if restrictions exist
+
+        if (!restrictions.isEnforced) return !isDenied
+
+        val isAllowed = restrictions.allowedRanges.any { range ->
+            // Simple exact match for now - could be extended to CIDR
+            requestIp == range || requestIp.startsWith(range.removeSuffix("*"))
+        }
+        return if (isDenied) !isAllowed else isAllowed
     }
 }
 
@@ -281,4 +407,28 @@ data class CustomCondition(
     val predicate: (ConditionContext) -> Boolean
 ) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean = predicate(ctx)
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Extract community ID from resource context, handling hierarchy.
+ */
+private fun extractCommunityId(resourceContext: ResourceContext): Long? = when (resourceContext) {
+    is CommunityContext -> resourceContext.id
+    is CampaignContext -> resourceContext.community.id
+    is IdeaContext -> resourceContext.community.id
+    is CustomFieldContext -> resourceContext.community?.id
+    else -> null
+}
+
+/**
+ * Extract campaign ID from resource context, handling hierarchy.
+ */
+private fun extractCampaignId(resourceContext: ResourceContext): Long? = when (resourceContext) {
+    is CampaignContext -> resourceContext.id
+    is IdeaContext -> resourceContext.campaign.id
+    else -> null
 }

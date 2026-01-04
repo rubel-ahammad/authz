@@ -10,8 +10,9 @@ import com.ideascale.commons.authz.context.*
  * Usage:
  * ```kotlin
  * `when` {
- *     role { hasRole(Role.WORKSPACE_ADMIN) }
- *     relationship { isOwner() }
+ *     role { isWorkspaceAdmin() }
+ *     relationship { isIdeaOwner() }
+ *     attribute { subscriptionState(SubscriptionState.ACTIVE) }
  * }
  * ```
  */
@@ -20,21 +21,24 @@ class ConditionBuilder {
     private val conditions = mutableListOf<PolicyCondition>()
 
     /**
-     * Add a role-based condition (Membership permission).
+     * Add a role-based condition (Membership pattern).
+     * Checks if principal has a specific role for the resource being accessed.
      */
     fun role(init: RoleConditionBuilder.() -> Unit) {
         conditions.add(RoleConditionBuilder().apply(init).build())
     }
 
     /**
-     * Add a relationship-based condition (Relationship permission).
+     * Add a relationship-based condition (Relationship pattern).
+     * Checks principal-resource relationships like ownership.
      */
     fun relationship(init: RelationshipConditionBuilder.() -> Unit) {
         conditions.add(RelationshipConditionBuilder().apply(init).build())
     }
 
     /**
-     * Add an attribute-based condition.
+     * Add an attribute-based condition (ABAC).
+     * Checks resource or principal attributes.
      */
     fun attribute(init: AttributeConditionBuilder.() -> Unit) {
         conditions.add(AttributeConditionBuilder().apply(init).build())
@@ -42,6 +46,7 @@ class ConditionBuilder {
 
     /**
      * Add a resource-context-based condition.
+     * Checks resource context validity (tenant mismatch, etc.).
      */
     fun resource(init: ResourceConditionBuilder.() -> Unit) {
         conditions.add(ResourceConditionBuilder().apply(init).build())
@@ -68,40 +73,54 @@ class ConditionBuilder {
 }
 
 /**
- * Builder for role-based conditions (Membership permissions).
+ * Builder for role-based conditions (Membership pattern).
+ *
+ * These conditions check if the principal has a specific role
+ * for the SPECIFIC resource being accessed (not just any resource).
  */
 @CedarDslMarker
 class RoleConditionBuilder {
     private var condition: PolicyCondition? = null
 
-    /** Check if principal has specific role at any level */
-    fun hasRole(role: Role) {
-        condition = HasRoleCondition(role)
+    // === Workspace Roles ===
+
+    /** Check if principal is a workspace admin */
+    fun isWorkspaceAdmin() {
+        condition = IsWorkspaceAdminCondition
     }
 
-    /** Check if principal has specific role at specific level */
-    fun hasRole(role: Role, at: RoleLevel) {
-        condition = HasRoleCondition(role, at)
+    // === Admin Roles (for specific resource) ===
+
+    /** Check if principal is admin of the community in resource context */
+    fun isCommunityAdmin() {
+        condition = IsCommunityAdminCondition
     }
 
-    /** Check if principal has any of the specified roles (2 roles) */
-    fun hasAnyRole(first: Role, second: Role) {
-        condition = HasAnyRoleCondition(setOf(first, second))
+    /** Check if principal is admin of the campaign in resource context */
+    fun isCampaignAdmin() {
+        condition = IsCampaignAdminCondition
     }
 
-    /** Check if principal has any of the specified roles (3 roles) */
-    fun hasAnyRole(first: Role, second: Role, third: Role) {
-        condition = HasAnyRoleCondition(setOf(first, second, third))
+    // === Moderator Roles (for specific resource) ===
+
+    /** Check if principal is moderator of the community in resource context */
+    fun isCommunityModerator() {
+        condition = IsCommunityModeratorCondition
     }
 
-    /** Check if principal has any of the specified roles */
-    fun hasAnyRole(roles: Set<Role>) {
-        condition = HasAnyRoleCondition(roles)
+    /** Check if principal is moderator of the campaign in resource context */
+    fun isCampaignModerator() {
+        condition = IsCampaignModeratorCondition
     }
 
-    /** Check if principal has any of the specified roles at specific level */
-    fun hasAnyRole(roles: Set<Role>, at: RoleLevel) {
-        condition = HasAnyRoleCondition(roles, at)
+    /** Check if principal is moderator of the group in resource context */
+    fun isGroupModerator() {
+        condition = IsGroupModeratorCondition
+    }
+
+    /** Check if principal is moderator of the custom field in resource context */
+    fun isCustomFieldModerator() {
+        condition = IsCustomFieldModeratorCondition
     }
 
     fun build(): PolicyCondition = condition
@@ -109,30 +128,38 @@ class RoleConditionBuilder {
 }
 
 /**
- * Builder for relationship-based conditions (Relationship permissions).
+ * Builder for relationship-based conditions (Relationship pattern).
+ *
+ * These conditions check direct relationships between principal and resource,
+ * such as ownership or group membership.
  */
 @CedarDslMarker
 class RelationshipConditionBuilder {
     private var condition: PolicyCondition? = null
 
-    /** Check if principal is owner of the resource */
-    fun isOwner() {
-        condition = IsOwnerCondition()
-    }
-
-    /** Check if principal is owner of an idea */
+    /** Check if principal is owner of the idea */
     fun isIdeaOwner() {
-        condition = IsOwnerCondition(OwnershipType.IDEA)
+        condition = IsIdeaOwnerCondition
     }
 
-    /** Check if principal has access via specific groups */
-    fun inGroup(vararg groupIds: String) {
-        condition = InGroupCondition(groupIds.toSet())
+    /** Check if principal is a contributor to the idea */
+    fun isIdeaContributor() {
+        condition = IsIdeaContributorCondition
     }
 
-    /** Check if principal has access via any group */
-    fun inAnyGroup() {
-        condition = InGroupCondition(null)
+    /** Check if principal is a viewer of the idea */
+    fun isIdeaViewer() {
+        condition = IsIdeaViewerCondition
+    }
+
+    /** Check if principal has any relationship to the idea */
+    fun hasIdeaRelationship() {
+        condition = HasIdeaRelationshipCondition
+    }
+
+    /** Check if principal is a member of the group */
+    fun isGroupMember() {
+        condition = IsGroupMemberCondition
     }
 
     fun build(): PolicyCondition = condition
@@ -161,7 +188,7 @@ class ResourceConditionBuilder {
 }
 
 /**
- * Builder for attribute-based conditions.
+ * Builder for attribute-based conditions (ABAC).
  */
 @CedarDslMarker
 class AttributeConditionBuilder {
@@ -201,6 +228,16 @@ class AttributeConditionBuilder {
     /** Check if community is NOT in specified status(es) */
     fun communityStatusNot(vararg statuses: CommunityStatus) {
         condition = CommunityStatusCondition(statuses.toSet(), negate = true)
+    }
+
+    /** Check if community is private */
+    fun communityPrivate() {
+        condition = CommunityPrivateCondition(true)
+    }
+
+    /** Check if community is public */
+    fun communityPublic() {
+        condition = CommunityPrivateCondition(false)
     }
 
     // ========== Member Status ==========
