@@ -1,7 +1,9 @@
 package com.ideascale.commons.authz.engine.dsl
 
-import com.ideascale.commons.authz.engine.model.*
 import com.ideascale.commons.authz.context.*
+import com.ideascale.commons.authz.engine.model.*
+import com.ideascale.commons.authz.Channel
+import com.ideascale.commons.authz.PrincipalType
 
 /**
  * DSL builder for policy conditions.
@@ -13,6 +15,11 @@ import com.ideascale.commons.authz.context.*
  *     role { isWorkspaceAdmin() }
  *     relationship { isIdeaOwner() }
  *     attribute { subscriptionState(SubscriptionState.ACTIVE) }
+ *     environment { channelIs(Channel.ADMIN_UI) }
+ *     anyOf(
+ *         { attribute { workspacePublic() } },
+ *         { role { isWorkspaceAdmin() } }
+ *     )
  * }
  * ```
  */
@@ -53,6 +60,14 @@ class ConditionBuilder {
     }
 
     /**
+     * Add an environment-based condition.
+     * Checks request metadata (channel, user agent).
+     */
+    fun environment(init: EnvironmentConditionBuilder.() -> Unit) {
+        conditions.add(EnvironmentConditionBuilder().apply(init).build())
+    }
+
+    /**
      * Add a custom condition with lambda.
      */
     fun custom(id: String, predicate: (ConditionContext) -> Boolean) {
@@ -66,6 +81,23 @@ class ConditionBuilder {
         val innerConditions = ConditionBuilder().apply(init).build()
         if (innerConditions.isNotEmpty()) {
             conditions.add(NotCondition(AndCondition(innerConditions)))
+        }
+    }
+
+    /**
+     * OR combinator for grouped conditions (each group is ANDed internally).
+     */
+    fun anyOf(vararg builders: ConditionBuilder.() -> Unit) {
+        val groups = builders.map { ConditionBuilder().apply(it).build() }
+        val orConditions = groups.mapNotNull { group ->
+            when (group.size) {
+                0 -> null
+                1 -> group.first()
+                else -> AndCondition(group)
+            }
+        }
+        if (orConditions.isNotEmpty()) {
+            conditions.add(OrCondition(orConditions))
         }
     }
 
@@ -188,11 +220,64 @@ class ResourceConditionBuilder {
 }
 
 /**
+ * Builder for environment-based conditions.
+ */
+@CedarDslMarker
+class EnvironmentConditionBuilder {
+    private var condition: PolicyCondition? = null
+
+    /** Check if request channel is one of the specified channels */
+    fun channelIs(vararg channels: Channel) {
+        condition = ChannelCondition(channels.toSet())
+    }
+
+    /** Check if request channel is NOT one of the specified channels */
+    fun channelIsNot(vararg channels: Channel) {
+        condition = ChannelCondition(channels.toSet(), negate = true)
+    }
+
+    /** Check if user agent contains any of the provided tokens */
+    fun userAgentContains(vararg tokens: String) {
+        condition = UserAgentContainsCondition(tokens.toSet())
+    }
+
+    /** Check if user agent does NOT contain any of the provided tokens */
+    fun userAgentNotContains(vararg tokens: String) {
+        condition = UserAgentContainsCondition(tokens.toSet(), negate = true)
+    }
+
+    fun build(): PolicyCondition = condition
+        ?: throw IllegalStateException("No environment condition specified")
+}
+
+/**
  * Builder for attribute-based conditions (ABAC).
  */
 @CedarDslMarker
 class AttributeConditionBuilder {
     private var condition: PolicyCondition? = null
+
+    // ========== Principal Identity ==========
+
+    /** Check if principal type is one of the specified types */
+    fun principalType(vararg types: PrincipalType) {
+        condition = PrincipalTypeCondition(types.toSet())
+    }
+
+    /** Check if principal type is NOT one of the specified types */
+    fun principalTypeNot(vararg types: PrincipalType) {
+        condition = PrincipalTypeCondition(types.toSet(), negate = true)
+    }
+
+    /** Check if principal is impersonating */
+    fun impersonating() {
+        condition = ImpersonatingCondition(true)
+    }
+
+    /** Check if principal is NOT impersonating */
+    fun notImpersonating() {
+        condition = ImpersonatingCondition(false)
+    }
 
     // ========== Idea State ==========
 
@@ -250,6 +335,18 @@ class AttributeConditionBuilder {
     /** Check if member is NOT in specified status(es) */
     fun memberStatusNot(vararg statuses: MemberStatus) {
         condition = MemberStatusCondition(statuses.toSet(), negate = true)
+    }
+
+    // ========== Email Domain ==========
+
+    /** Check if principal email domain is allowed by workspace policy */
+    fun emailDomainAllowed() {
+        condition = EmailDomainAllowedCondition(true)
+    }
+
+    /** Check if principal email domain is NOT allowed by workspace policy */
+    fun emailDomainNotAllowed() {
+        condition = EmailDomainAllowedCondition(false)
     }
 
     // ========== Subscription State ==========

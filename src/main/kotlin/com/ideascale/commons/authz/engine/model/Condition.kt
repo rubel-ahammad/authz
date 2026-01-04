@@ -1,6 +1,8 @@
 package com.ideascale.commons.authz.engine.model
 
+import com.ideascale.commons.authz.Channel
 import com.ideascale.commons.authz.Principal
+import com.ideascale.commons.authz.PrincipalType
 import com.ideascale.commons.authz.action.Action
 import com.ideascale.commons.authz.context.*
 import com.ideascale.commons.authz.resource.Resource
@@ -49,6 +51,14 @@ data class AndCondition(val conditions: List<PolicyCondition>) : PolicyCondition
 data class NotCondition(val condition: PolicyCondition) : PolicyCondition {
     override fun evaluate(ctx: ConditionContext): Boolean =
         !condition.evaluate(ctx)
+}
+
+/**
+ * Any condition must be true (OR).
+ */
+data class OrCondition(val conditions: List<PolicyCondition>) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean =
+        conditions.any { it.evaluate(ctx) }
 }
 
 // ============================================================================
@@ -243,6 +253,27 @@ data object ResourceContextMismatchCondition : PolicyCondition {
 // ============================================================================
 
 /**
+ * Checks principal type.
+ */
+data class PrincipalTypeCondition(
+    val types: Set<PrincipalType>,
+    val negate: Boolean = false
+) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val matches = ctx.principal.type in types
+        return if (negate) !matches else matches
+    }
+}
+
+/**
+ * Checks if principal is impersonating.
+ */
+data class ImpersonatingCondition(val isImpersonating: Boolean = true) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean =
+        ctx.principal.isImpersonating == isImpersonating
+}
+
+/**
  * Checks idea state.
  */
 data class IdeaStateCondition(
@@ -310,6 +341,24 @@ data class MemberStatusCondition(
         val status = ctx.principalContext?.status ?: return false
         val matches = status in statuses
         return if (negate) !matches else matches
+    }
+}
+
+/**
+ * Checks principal email domain against workspace policy.
+ */
+data class EmailDomainAllowedCondition(val allowed: Boolean = true) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val policy = ctx.resourceContext?.workspace?.emailDomainPolicy
+        if (policy == null) return allowed
+
+        val principalCtx = ctx.principalContext ?: return false
+        val domain = principalCtx.emailDomain
+            ?: principalCtx.email?.substringAfter("@")
+            ?: return false
+
+        val matches = policy.isAllowed(domain)
+        return if (allowed) matches else !matches
     }
 }
 
@@ -392,6 +441,38 @@ data class IpRestrictedCondition(val isDenied: Boolean = true) : PolicyCondition
             requestIp == range || requestIp.startsWith(range.removeSuffix("*"))
         }
         return if (isDenied) !isAllowed else isAllowed
+    }
+}
+
+// ============================================================================
+// Environment Conditions
+// ============================================================================
+
+/**
+ * Checks request channel.
+ */
+data class ChannelCondition(
+    val channels: Set<Channel>,
+    val negate: Boolean = false
+) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val channel = ctx.environmentContext?.channel ?: return false
+        val matches = channel in channels
+        return if (negate) !matches else matches
+    }
+}
+
+/**
+ * Checks if user agent contains any of the provided substrings.
+ */
+data class UserAgentContainsCondition(
+    val tokens: Set<String>,
+    val negate: Boolean = false
+) : PolicyCondition {
+    override fun evaluate(ctx: ConditionContext): Boolean {
+        val userAgent = ctx.environmentContext?.userAgent ?: return false
+        val matches = tokens.any { userAgent.contains(it) }
+        return if (negate) !matches else matches
     }
 }
 
